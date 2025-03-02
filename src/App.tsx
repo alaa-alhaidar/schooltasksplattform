@@ -85,7 +85,6 @@ function App() {
     note: "",
     school: schoolTownData?.id,
     teacher_id: user?.id,
-    
   });
   useEffect(() => {
     if (schoolTownData?.id) {
@@ -104,7 +103,7 @@ function App() {
     useState<Assignment | null>(null);
 
   const [getInfoSelectedAssignment, setGetInfoSelectedAssignment] =
-    useState<Assignment | null>(null);  
+    useState<Assignment | null>(null);
 
   const subjectColors: { [key: string]: string } = {
     Mathematics: "bg-blue-100",
@@ -165,22 +164,25 @@ function App() {
       console.log("No assignment ID provided");
       return;
     }
-  
+
     try {
-      console.log("Fetching data for Teacher ID:", getInfoSelectedAssignment.teacher);
-  
+      console.log(
+        "Fetching data for Teacher ID:",
+        getInfoSelectedAssignment.teacher
+      );
+
       const { data, error } = await supabase
         .from("teachers")
         .select("*")
         .eq("id", getInfoSelectedAssignment?.teacher?.id); // Use .eq() for exact match
-  
+
       if (error) {
         console.error("Error fetching teachers:", error);
         return;
       }
-  
+
       console.log("Teachers:", data);
-  
+
       if (data && data.length > 0) {
         setTeachers([data[0] as Teacher]); // Set the first teacher in the array
       } else {
@@ -190,7 +192,6 @@ function App() {
       console.error("Unexpected error:", error);
     }
   };
-  
 
   // Effect hook to trigger the fetch
   useEffect(() => {
@@ -203,8 +204,7 @@ function App() {
     if (getInfoSelectedAssignment?.teacher) {
       fetchTeachers();
     }
-  }, [getInfoSelectedAssignment?.teacher]); 
-  
+  }, [getInfoSelectedAssignment?.teacher]);
 
   useEffect(() => {
     if (user) {
@@ -317,7 +317,6 @@ function App() {
         note: "",
         school: schoolTownData?.id,
         teacher_id: user?.id,
-        
       });
       fetchAssignments();
     } catch (error: any) {
@@ -564,17 +563,41 @@ function App() {
             <div className="bg-purple-200 rounded-2xl p-8 w-[900px] max-h-96 overflow-y-auto">
               <h2 className="text-2xl font-bold mb-6">
                 {getInfoSelectedAssignment.subject}, Class{" "}
-                {getInfoSelectedAssignment.class_level} {getInfoSelectedAssignment.subclass},{" "}
+                {getInfoSelectedAssignment.class_level}{" "}
+                {getInfoSelectedAssignment.subclass},{" "}
                 {getInfoSelectedAssignment.title}.
               </h2>
-              <p className="text-gray-700">Tasks: {getInfoSelectedAssignment.title}</p>
-              <p className="text-gray-700">Topic: {getInfoSelectedAssignment.subject}</p>
-              <p className="text-gray-700"> Class:{getInfoSelectedAssignment.class_level}{getInfoSelectedAssignment.subclass}</p>
-              <p className="text-gray-700"> School: {schoolTownData?.school_full_name}</p>
-              <p className="text-gray-700"> Teachers: {getInfoSelectedAssignment?.teacher?.full_name}</p>
-              <p className="text-gray-700"> Deadline: {getInfoSelectedAssignment.deadline}</p>
-              <p className="text-gray-700"> Teacher ID: {getInfoSelectedAssignment?.teacher?.id}</p>
-              <p className="text-gray-700"> Task ID: {getInfoSelectedAssignment.id}</p>
+              <p className="text-gray-700">
+                Tasks: {getInfoSelectedAssignment.title}
+              </p>
+              <p className="text-gray-700">
+                Topic: {getInfoSelectedAssignment.subject}
+              </p>
+              <p className="text-gray-700">
+                {" "}
+                Class:{getInfoSelectedAssignment.class_level}
+                {getInfoSelectedAssignment.subclass}
+              </p>
+              <p className="text-gray-700">
+                {" "}
+                School: {schoolTownData?.school_full_name}
+              </p>
+              <p className="text-gray-700">
+                {" "}
+                Teachers: {getInfoSelectedAssignment?.teacher?.full_name}
+              </p>
+              <p className="text-gray-700">
+                {" "}
+                Deadline: {getInfoSelectedAssignment.deadline}
+              </p>
+              <p className="text-gray-700">
+                {" "}
+                Teacher ID: {getInfoSelectedAssignment?.teacher?.id}
+              </p>
+              <p className="text-gray-700">
+                {" "}
+                Task ID: {getInfoSelectedAssignment.id}
+              </p>
               <div className="flex justify-end mt-6">
                 <button
                   onClick={() => setGetInfoSelectedAssignment(null)}
@@ -801,6 +824,15 @@ function App() {
           </div>
           <button
             className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
+              selectedCategory === "Tests" ? "bg-black text-white" : "bg-white"
+            }`}
+            onClick={() => setSelectedCategory("Tests")}
+          >
+            <BookCheck size={20} />
+            <span>Tests</span>
+          </button>
+          <button
+            className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
               selectedCategory === "Mathematics"
                 ? "bg-black text-white"
                 : "bg-white"
@@ -848,15 +880,7 @@ function App() {
             <Beaker size={20} />
             <span>Chemie</span>
           </button>
-          <button
-            className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === "Tests" ? "bg-black text-white" : "bg-white"
-            }`}
-            onClick={() => setSelectedCategory("Tests")}
-          >
-            <BookCheck size={20} />
-            <span>Tests</span>
-          </button>
+         
         </div>
 
         {/* Active filters indicator */}
@@ -907,7 +931,7 @@ function App() {
                         {assignment.subject === "Chemie" && (
                           <Beaker size={20} />
                         )}
-                         {assignment.subject === "Tests" && (
+                        {assignment.subject === "Tests" && (
                           <BookCheck size={20} />
                         )}
                       </span>
@@ -1062,7 +1086,7 @@ function App() {
                         {assignment.subject === "Chemie" && (
                           <Beaker size={20} />
                         )}
-                         {assignment.subject === "Tests" && (
+                        {assignment.subject === "Tests" && (
                           <BookCheck size={20} />
                         )}
                       </span>
