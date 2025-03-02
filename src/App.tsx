@@ -21,6 +21,7 @@ import {
   Languages,
   School,
   Square,
+  BookCheck,
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase, signIn, signUp, signOut } from "./lib/supabase";
@@ -108,9 +109,10 @@ function App() {
   const subjectColors: { [key: string]: string } = {
     Mathematics: "bg-blue-100",
     German: "bg-orange-100",
-    English: "bg-red-100",
+    English: "bg-green-100",
     Physic: "bg-purple-100",
     Chemie: "bg-yellow-100",
+    Tests: "bg-red-200",
   };
 
   useEffect(() => {
@@ -629,6 +631,7 @@ function App() {
                     <option value="English">English</option>
                     <option value="Physic">Physic</option>
                     <option value="Chemie">Chemie</option>
+                    <option value="Tests">Tests</option>
                   </select>
                 </div>
                 <div>
@@ -845,6 +848,15 @@ function App() {
             <Beaker size={20} />
             <span>Chemie</span>
           </button>
+          <button
+            className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
+              selectedCategory === "Tests" ? "bg-black text-white" : "bg-white"
+            }`}
+            onClick={() => setSelectedCategory("Tests")}
+          >
+            <BookCheck size={20} />
+            <span>Tests</span>
+          </button>
         </div>
 
         {/* Active filters indicator */}
@@ -894,6 +906,9 @@ function App() {
                         {assignment.subject === "Physic" && <Atom size={20} />}
                         {assignment.subject === "Chemie" && (
                           <Beaker size={20} />
+                        )}
+                         {assignment.subject === "Tests" && (
+                          <BookCheck size={20} />
                         )}
                       </span>
                       <span className="ml-auto bg-white px-3 py-1 rounded-full text-sm">
@@ -1046,6 +1061,9 @@ function App() {
                         {assignment.subject === "Physic" && <Atom size={20} />}
                         {assignment.subject === "Chemie" && (
                           <Beaker size={20} />
+                        )}
+                         {assignment.subject === "Tests" && (
+                          <BookCheck size={20} />
                         )}
                       </span>
                       <span className="text-sm">{assignment.subject}</span>

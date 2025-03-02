@@ -80,7 +80,8 @@ CREATE POLICY "Teachers can update their own assignments"
   USING (auth.uid() = teacher_id);
 
 -- Create enum type for subjects
-CREATE TYPE subject_type AS ENUM ('Mathematics', 'German', 'English', 'Science', 'History', 'Art');
+CREATE TYPE subject_type AS ENUM ('Mathematics', 'German', 'English', 'Science', 
+'History', 'Art', 'Physic', 'Chemie', 'Tests');
 
 -- Add some initial subjects
 ALTER TABLE assignments 
