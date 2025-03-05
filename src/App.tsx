@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import {
@@ -70,6 +70,15 @@ function App() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(
+    null
+  );
+
+  const [selectedAssignment, setSelectedAssignment] =
+    useState<Assignment | null>(null);
+
+  const [getInfoSelectedAssignment, setGetInfoSelectedAssignment] =
+    useState<Assignment | null>(null);
   const [authForm, setAuthForm] = useState({
     email: "",
     password: "",
@@ -94,16 +103,6 @@ function App() {
       }));
     }
   }, [schoolTownData?.id]);
-
-  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(
-    null
-  );
-
-  const [selectedAssignment, setSelectedAssignment] =
-    useState<Assignment | null>(null);
-
-  const [getInfoSelectedAssignment, setGetInfoSelectedAssignment] =
-    useState<Assignment | null>(null);
 
   const subjectColors: { [key: string]: string } = {
     Mathematics: "bg-blue-100",
@@ -158,40 +157,42 @@ function App() {
     }
   };
 
-  const fetchTeachers = async () => {
-    // Ensure getInfoSelectedAssignment.id is available
-    if (!getInfoSelectedAssignment?.teacher) {
-      console.log("No assignment ID provided");
+
+  const fetchTeachers = useCallback(async () => {
+    // More robust null checking
+    const teacherId = getInfoSelectedAssignment
+    
+    if (!teacherId) {
+      console.log("No teacher ID available");
       return;
     }
-
+  
     try {
-      console.log(
-        "Fetching data for Teacher ID:",
-        getInfoSelectedAssignment.teacher
-      );
-
+      console.log("Fetching data for Teacher ID:", teacherId);
+      
       const { data, error } = await supabase
         .from("teachers")
         .select("*")
-        .eq("id", getInfoSelectedAssignment?.teacher?.id); // Use .eq() for exact match
-
+        .eq("id", teacherId)
+        .single(); // Use .single() to get first result directly
+  
       if (error) {
         console.error("Error fetching teachers:", error);
         return;
       }
-
-      console.log("Teachers:", data[0]);
-
-      if (data && data.length > 0) {
-        setTeachers(data[0]); // Set the first teacher in the array
-      } else {
-        setTeachers(data[0]);
-      }
+  
+      console.log("Teacher Data:", data);
+      setTeachers(data);
     } catch (error) {
       console.error("Unexpected error:", error);
     }
-  };
+  }, [getInfoSelectedAssignment?.teacher?.id]); // Specific dependency
+  
+  useEffect(() => {
+    if (getInfoSelectedAssignment?.teacher?.id) {
+      fetchTeachers();
+    }
+  }, [fetchTeachers, getInfoSelectedAssignment?.teacher?.id]);
 
   // Effect hook to trigger the fetch
   useEffect(() => {
@@ -200,11 +201,7 @@ function App() {
     }
   }, [schoolName]); // Only re-run when schoolName changes
 
-  useEffect(() => {
-    if (getInfoSelectedAssignment?.teacher) {
-      fetchTeachers();
-    }
-  }, [getInfoSelectedAssignment?.teacher]);
+ 
 
   useEffect(() => {
     if (user) {
@@ -581,18 +578,12 @@ function App() {
                 {" "}
                 School: {schoolTownData?.school_full_name}
               </p>
-              <p className="text-gray-700">
-                {" "}
-                Teachers: {teachers?.full_name}
-              </p>
+              <p className="text-gray-700"> Teachers: {teachers?.full_name}</p>
               <p className="text-gray-700">
                 {" "}
                 Deadline: {getInfoSelectedAssignment.deadline}
               </p>
-              <p className="text-gray-700">
-                {" "}
-                Teacher ID: {teachers?.id}
-              </p>
+              <p className="text-gray-700"> Teacher ID: {teachers?.id}</p>
               <p className="text-gray-700">
                 {" "}
                 Task ID: {getInfoSelectedAssignment.id}
@@ -879,7 +870,6 @@ function App() {
             <Beaker size={20} />
             <span>Chemie</span>
           </button>
-         
         </div>
 
         {/* Active filters indicator */}
