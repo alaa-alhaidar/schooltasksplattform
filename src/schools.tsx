@@ -523,29 +523,7 @@ function App() {
             </button>
             {showClassDropdown && (
               <div className="absolute mt-2 w-48 bg-white rounded-lg shadow-lg z-10">
-                {/* Option to show all classes */}
-                <button
-                  onClick={() => {
-                    setSelectedClass(null);
-                    setShowClassDropdown(false);
-                  }}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100"
-                >
-                  All Classes
-                </button>
-                {/* Individual class options */}
-                {[1, 2, 3, 4, 5, 6].map((level) => (
-                  <button
-                    key={level}
-                    onClick={() => {
-                      setSelectedClass(level);
-                      setShowClassDropdown(false);
-                    }}
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100"
-                  >
-                    Class {level}
-                  </button>
-                ))}
+               
               </div>
             )}
           </div>
