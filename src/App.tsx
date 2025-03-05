@@ -64,7 +64,7 @@ function App() {
   const [selectedClass, setSelectedClass] = useState<number | null>(null); // State for selected class level
   const [showClassDropdown, setShowClassDropdown] = useState(false); // State to toggle dropdown
   const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [teachers, setTeachers] = useState<Teacher | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
@@ -84,7 +84,7 @@ function App() {
     deadline: format(new Date(), "yyyy-MM-dd"),
     note: "",
     school: schoolTownData?.id,
-    teacher_id: user?.id,
+    teacher_id: teachers?.id,
   });
   useEffect(() => {
     if (schoolTownData?.id) {
@@ -181,12 +181,12 @@ function App() {
         return;
       }
 
-      console.log("Teachers:", data);
+      console.log("Teachers:", data[0]);
 
       if (data && data.length > 0) {
-        setTeachers([data[0] as Teacher]); // Set the first teacher in the array
+        setTeachers(data[0]); // Set the first teacher in the array
       } else {
-        setTeachers([]);
+        setTeachers(data[0]);
       }
     } catch (error) {
       console.error("Unexpected error:", error);
@@ -316,7 +316,7 @@ function App() {
         deadline: format(new Date(), "yyyy-MM-dd"),
         note: "",
         school: schoolTownData?.id,
-        teacher_id: user?.id,
+        teacher_id: teachers?.id,
       });
       fetchAssignments();
     } catch (error: any) {
@@ -358,8 +358,7 @@ function App() {
       deadline: format(new Date(assignment.deadline), "yyyy-MM-dd"),
       note: assignment.note,
       school: schoolTownData?.id,
-      teacher_id: user?.id,
-      teacher: user?.id,
+      teacher_id: teachers?.id,
     });
     setShowAddForm(true);
   };
@@ -584,7 +583,7 @@ function App() {
               </p>
               <p className="text-gray-700">
                 {" "}
-                Teachers: {getInfoSelectedAssignment?.teacher?.full_name}
+                Teachers: {teachers?.full_name}
               </p>
               <p className="text-gray-700">
                 {" "}
@@ -592,7 +591,7 @@ function App() {
               </p>
               <p className="text-gray-700">
                 {" "}
-                Teacher ID: {getInfoSelectedAssignment?.teacher?.id}
+                Teacher ID: {teachers?.id}
               </p>
               <p className="text-gray-700">
                 {" "}
@@ -746,7 +745,7 @@ function App() {
                         subclass: "",
                         deadline: format(new Date(), "yyyy-MM-dd"),
                         note: "",
-                        teacher_id: user?.id,
+                        teacher_id: teachers?.id,
                       }));
                     }}
                     className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"

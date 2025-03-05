@@ -26,7 +26,7 @@ import {
 import { format } from "date-fns";
 import { supabase, signIn, signUp, signOut } from "./lib/supabase";
 import { Pencil, Trash2, X, Check, Loader2, Info } from "lucide-react";
-
+import { se } from "date-fns/locale/se";
 
 interface Teacher {
   id: string;
@@ -65,6 +65,7 @@ function App() {
   const [showClassDropdown, setShowClassDropdown] = useState(false); // State to toggle dropdown
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [teachers, setTeachers] = useState<Teacher | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -158,39 +159,55 @@ function App() {
   };
 
   const fetchTeachers = async () => {
-    // Ensure getInfoSelectedAssignment.id is available
-    if (!getInfoSelectedAssignment?.teacher) {
-      console.log("No assignment ID provided");
+    // Ensure the task ID is available
+    if (!getInfoSelectedAssignment?.id) {
+      console.log("No task ID provided");
       return;
     }
-
+  
     try {
-      console.log(
-        "Fetching data for Teacher ID:",
-        getInfoSelectedAssignment.teacher
-      );
-
-      const { data, error } = await supabase
-        .from("teachers")
-        .select("*")
-        .eq("id", getInfoSelectedAssignment?.teacher?.id); // Use .eq() for exact match
-
-      if (error) {
-        console.error("Error fetching teachers:", error);
+      console.log("Fetching task for ID:", getInfoSelectedAssignment.id);
+  
+      // Step 1: Get the task details (to fetch the assigned teacher ID)
+      const { data: taskData, error: taskError } = await supabase
+        .from("assignments") 
+        .select("teacher_id") // Only select the teacher column
+        .eq("id", getInfoSelectedAssignment.id)
+        .single(); // Fetch only one task
+  
+      if (taskError) {
+        console.error("Error fetching task:", taskError);
         return;
       }
-
-      console.log("Teachers:", data[0]);
-
-      if (data && data.length > 0) {
-        setTeachers(data[0]); // Set the first teacher in the array
-      } else {
-        setTeachers(data[0]);
+  
+      if (!taskData?.teacher_id) {
+        console.log("No teacher assigned to this task");
+        return;
       }
+  
+      console.log("Teacher ID found:", taskData.teacher_id);
+  
+      // Step 2: Fetch the teacher data
+      const { data: teacherData, error: teacherError } = await supabase
+        .from("teachers")
+        .select("*")
+        .eq("id", taskData.teacher_id) // Fetch teacher based on ID
+        .single(); // Expecting only one teacher
+  
+      if (teacherError) {
+        console.error("Error fetching teacher:", teacherError);
+        return;
+      }
+  
+      console.log("Fetched Teacher:", teacherData);
+  
+      // Step 3: Update state with the teacher's data
+      setTeachers(teacherData ? teacherData :null);
     } catch (error) {
       console.error("Unexpected error:", error);
     }
   };
+  
 
   // Effect hook to trigger the fetch
   useEffect(() => {
@@ -200,7 +217,7 @@ function App() {
   }, [schoolName]); // Only re-run when schoolName changes
 
   useEffect(() => {
-    if (getInfoSelectedAssignment?.teacher) {
+    if (user) {
       fetchTeachers();
     }
   }, [getInfoSelectedAssignment?.teacher]);
@@ -273,7 +290,94 @@ function App() {
     navigate("/login");
   };
 
-  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!user) {
+      setShowAuthForm(true);
+      return;
+    }
+
+    try {
+      if (editingAssignment) {
+        // Update existing assignment
+        const { error } = await supabase
+          .from("assignments")
+          .update({
+            ...newAssignment,
+            teacher_id: user.id,
+          })
+          .eq("id", editingAssignment.id);
+
+        if (error) throw error;
+      } else {
+        // Create new assignment
+        const { error } = await supabase.from("assignments").insert([
+          {
+            ...newAssignment,
+            teacher_id: user.id,
+          },
+        ]);
+
+        if (error) throw error;
+      }
+
+      setShowAddForm(false);
+      setEditingAssignment(null);
+      setNewAssignment({
+        title: "",
+        subject: "Mathematics",
+        class_level: 1,
+        subclass: "",
+        deadline: format(new Date(), "yyyy-MM-dd"),
+        note: "",
+        school: schoolTownData?.id,
+        teacher_id: teachers?.id,
+      });
+      fetchAssignments();
+    } catch (error: any) {
+      console.error("Error saving assignment:", error);
+      alert("Failed to save assignment");
+    }
+  };
+
+  const handleDeleteAssignment = async (assignmentId: string) => {
+    if (!user) {
+      alert("You must be logged in to delete an assignment.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("assignments")
+      .delete()
+      .eq("id", assignmentId);
+
+    if (error) {
+      console.error("Error deleting assignment:", error);
+      alert("Failed to delete assignment");
+      return;
+    }
+
+    // Update the state to remove the deleted assignment
+    setAssignments((prevAssignments) =>
+      prevAssignments.filter((assignment) => assignment.id !== assignmentId)
+    );
+  };
+
+  const handleEditAssignment = (assignment: Assignment) => {
+    setEditingAssignment(assignment);
+    setNewAssignment({
+      title: assignment.title,
+      subject: assignment.subject,
+      class_level: assignment.class_level,
+      subclass: assignment.subclass,
+      deadline: format(new Date(assignment.deadline), "yyyy-MM-dd"),
+      note: assignment.note,
+      school: schoolTownData?.id,
+      teacher_id: teachers?.id,
+    });
+    setShowAddForm(true);
+  };
 
   // Fixed filtering function that correctly checks class_level
   const filteredAssignments = assignments.filter((assignment) => {
@@ -342,6 +446,15 @@ function App() {
             <Map /> School: {schoolTownData?.school_full_name}
           </h1>
           <div className="flex items-center space-x-4">
+            {user && (
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-black text-white rounded-full"
+              >
+                <Plus size={20} />
+                <span>Add Assignment</span>
+              </button>
+            )}
             <button className="p-2 rounded-full hover:bg-gray-100">
               <Bell size={24} />
             </button>
@@ -486,7 +599,7 @@ function App() {
               </p>
               <p className="text-gray-700">
                 {" "}
-                Teachers: {teachers?.full_name}
+                Teachers: {selectedAssignment?.teacher}
               </p>
               <p className="text-gray-700">
                 {" "}
@@ -508,6 +621,164 @@ function App() {
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Add/Edit Assignment Form Modal */}
+        {showAddForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-8 w-[500px]">
+              <h2 className="text-2xl font-bold mb-6">
+                {editingAssignment ? "Edit Assignment" : "Add New Assignment"}
+              </h2>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    value={newAssignment.title}
+                    onChange={(e) =>
+                      setNewAssignment({
+                        ...newAssignment,
+                        title: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border rounded-lg"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Subject
+                  </label>
+                  <select
+                    value={newAssignment.subject}
+                    onChange={(e) =>
+                      setNewAssignment({
+                        ...newAssignment,
+                        subject: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border rounded-lg"
+                  >
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="German">German</option>
+                    <option value="English">English</option>
+                    <option value="Physic">Physic</option>
+                    <option value="Chemie">Chemie</option>
+                    <option value="Tests">Tests</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Class Level
+                  </label>
+                  <select
+                    value={newAssignment.class_level}
+                    onChange={(e) =>
+                      setNewAssignment({
+                        ...newAssignment,
+                        class_level: parseInt(e.target.value),
+                      })
+                    }
+                    className="w-full px-3 py-2 border rounded-lg"
+                  >
+                    {[1, 2, 3, 4, 5, 6].map((level) => (
+                      <option key={level} value={level}>
+                        Class {level}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Sub Class Level
+                  </label>
+                  <select
+                    value={newAssignment.subclass}
+                    onChange={(e) =>
+                      setNewAssignment({
+                        ...newAssignment,
+                        subclass: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border rounded-lg"
+                  >
+                    {["A", "B", "C"].map((level) => (
+                      <option key={level} value={level}>
+                        SUB Class {level}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Deadline
+                  </label>
+                  <input
+                    type="date"
+                    value={newAssignment.deadline}
+                    onChange={(e) =>
+                      setNewAssignment({
+                        ...newAssignment,
+                        deadline: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border rounded-lg"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Note
+                  </label>
+                  <input
+                    type="text"
+                    value={newAssignment.note}
+                    onChange={(e) =>
+                      setNewAssignment({
+                        ...newAssignment,
+                        note: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border rounded-lg"
+                  />
+                </div>
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddForm(false);
+                      setEditingAssignment(null);
+                      setNewAssignment((prev) => ({
+                        ...prev,
+                        title: "",
+                        subject: "Mathematics",
+                        class_level: 1,
+                        subclass: "",
+                        deadline: format(new Date(), "yyyy-MM-dd"),
+                        note: "",
+                        teacher_id: teachers?.id,
+                      }));
+                    }}
+                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-black text-white rounded-lg"
+                  >
+                    {editingAssignment
+                      ? "Update Assignment"
+                      : "Create Assignment"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
@@ -712,7 +983,18 @@ function App() {
                     </div>
                     {/* Edit and Delete Buttons */}
                     <div className="flex justify-end space-x-2 mt-4">
-                   
+                      <button
+                        onClick={() => handleEditAssignment(assignment)}
+                        className="px-3 py-1 bg-green-300 text-white rounded-lg hover:bg-green-600"
+                      >
+                        <Pencil className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAssignment(assignment.id)}
+                        className="px-3 py-1 bg-red-300 text-white rounded-lg hover:bg-red-600"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
                       <button
                         onClick={() => setSelectedAssignment(assignment)}
                         className="px-3 py-1 bg-blue-300 text-white rounded-lg hover:bg-blue-600"

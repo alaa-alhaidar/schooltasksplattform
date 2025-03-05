@@ -30,28 +30,29 @@ const Login = () => {
     e.preventDefault();
     setAuthError(null);
     setLoading(true);
-
+  
     try {
       if (isSignUp) {
-        const { error } = await signUp(
-          authForm.email,
-          authForm.password,
-          authForm.fullName
-        );
+        const { error } = await signUp(authForm.email, authForm.password, authForm.fullName);
         if (error) throw error;
-        // After successful signup, show a success message
         alert('Account created! Please sign in.');
         setIsSignUp(false);
       } else {
         const { error } = await signIn(authForm.email, authForm.password);
         if (error) throw error;
-
-        // Parse school name from email after successful login
+  
         const email = authForm.email;
-        const schoolName = email.split('@')[1].split('.')[0]; // e.g., "johnschool"
-
-        // Pass school name to the dashboard or main app
-        navigate('/dashboard', { state: { schoolName } });
+        const emailPrefix = email.split('@')[0]; // Extracts "1a" from "1a@bigschool.com"
+        const schoolName = email.split('@')[1].split('.')[0]; // Extracts "bigschool"
+  
+        // Check if emailPrefix is a subclass (assuming this pattern means it's a school)
+        const isSchool = /\d+[a-zA-Z]$/.test(emailPrefix); // Matches patterns like "1a", "2b", etc.
+  
+        if (isSchool) {
+          navigate('/schools', { state: { schoolName } });
+        } else {
+          navigate('/dashboard', { state: { schoolName } });
+        }
       }
     } catch (error: any) {
       setAuthError(error.message || 'An error occurred. Please try again.');
@@ -59,6 +60,7 @@ const Login = () => {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 relative">
