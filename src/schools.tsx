@@ -57,6 +57,8 @@ function App() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const schoolName = state?.schoolName;
+  const emailPrefix_class_level = state?.classLevel;
+  const emailPrefix_subclass = state?.subclass;
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(
     null
   );
@@ -75,28 +77,6 @@ function App() {
     fullName: "",
   });
 
-  const [newAssignment, setNewAssignment] = useState({
-    title: "",
-    subject: "Mathematics",
-    class_level: 1,
-    subclass: "A",
-    deadline: format(new Date(), "yyyy-MM-dd"),
-    note: "",
-    school: schoolTownData?.id,
-    teacher_id: teachers?.id,
-  });
-  useEffect(() => {
-    if (schoolTownData?.id) {
-      setNewAssignment((prev) => ({
-        ...prev,
-        school: schoolTownData.id,
-      }));
-    }
-  }, [schoolTownData?.id]);
-
-  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(
-    null
-  );
 
   const [selectedAssignment, setSelectedAssignment] =
     useState<Assignment | null>(null);
@@ -222,7 +202,9 @@ function App() {
         teacher:teachers(id, full_name, avatar_url)
       `
       )
-      .eq("school", schoolTownData.id);
+      .eq("school", schoolTownData.id)
+      .eq('class_level', emailPrefix_class_level)
+      .eq('subclass', emailPrefix_subclass);
 
     if (error) {
       console.error("Error fetching assignments:", error);

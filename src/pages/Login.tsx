@@ -45,11 +45,22 @@ const Login = () => {
         const emailPrefix = email.split('@')[0]; // Extracts "1a" from "1a@bigschool.com"
         const schoolName = email.split('@')[1].split('.')[0]; // Extracts "bigschool"
   
-        // Check if emailPrefix is a subclass (assuming this pattern means it's a school)
-        const isSchool = /\d+[a-zA-Z]$/.test(emailPrefix); // Matches patterns like "1a", "2b", etc.
+        // Extract class level and subclass
+        const matches = emailPrefix.match(/^(\d+)([a-zA-Z])$/);
+        const classLevel = matches ? matches[1] : null;
+        const subclass = matches ? matches[2] : null;
+  
+        // Check if it's a valid school email pattern
+        const isSchool = !!matches;
   
         if (isSchool) {
-          navigate('/schools', { state: { schoolName } });
+          navigate('/schools', { 
+            state: { 
+              schoolName, 
+              classLevel, 
+              subclass 
+            } 
+          });
         } else {
           navigate('/dashboard', { state: { schoolName } });
         }
