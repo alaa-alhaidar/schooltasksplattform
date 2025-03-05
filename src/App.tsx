@@ -41,7 +41,7 @@ interface Assignment {
   deadline: string;
   teacher: string;
   student_count: number;
-  class_level: number;
+  class_level: string;
   subclass: string;
   note: string;
   school: string;

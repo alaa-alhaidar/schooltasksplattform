@@ -49,6 +49,7 @@ const Login = () => {
         const matches = emailPrefix.match(/^(\d+)([a-zA-Z])$/);
         const classLevel = matches ? matches[1] : null;
         const subclass = matches ? matches[2] : null;
+        
   
         // Check if it's a valid school email pattern
         const isSchool = !!matches;
@@ -58,7 +59,7 @@ const Login = () => {
             state: { 
               schoolName, 
               classLevel, 
-              subclass 
+              subclass
             } 
           });
         } else {

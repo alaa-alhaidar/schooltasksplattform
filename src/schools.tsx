@@ -41,7 +41,7 @@ interface Assignment {
   deadline: string;
   teacher: string;
   student_count: number;
-  class_level: number;
+  class_level: string;
   subclass: string;
   note: string;
   school: string;
@@ -203,8 +203,9 @@ function App() {
       `
       )
       .eq("school", schoolTownData.id)
-      .eq('class_level', emailPrefix_class_level)
-      .eq('subclass', emailPrefix_subclass);
+      .eq('class_level'.toLowerCase(), emailPrefix_class_level)
+      .eq('subclass', emailPrefix_subclass.toUpperCase());
+      
 
     if (error) {
       console.error("Error fetching assignments:", error);
@@ -321,7 +322,7 @@ function App() {
         <header className="flex justify-between items-center mb-12">
           <h1 className="text-3xl font-bold">
             {""}
-            <Map /> School: {schoolTownData?.school_full_name}
+            <Map /> School: {schoolTownData?.school_full_name}, Class: {emailPrefix_class_level}{emailPrefix_subclass.toUpperCase()}
           </h1>
           <div className="flex items-center space-x-4">
             <button className="p-2 rounded-full hover:bg-gray-100">
