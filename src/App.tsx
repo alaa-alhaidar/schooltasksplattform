@@ -25,8 +25,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase, signIn, signUp, signOut } from "./lib/supabase";
-import { Pencil, Trash2, X, Check, Loader2, Info } from "lucide-react";
-import { se } from "date-fns/locale/se";
+import { Pencil, Trash2, X, Info } from "lucide-react";
 
 interface Teacher {
   id: string;
@@ -39,12 +38,14 @@ interface Assignment {
   title: string;
   subject: string;
   deadline: string;
-  teacher: string;
+  teacher_full_name: string;
+  teacher_url_avatar: string;
   student_count: number;
   class_level: string;
   subclass: string;
   note: string;
   school: string;
+  teacher_id: string;
 }
 interface SchoolTownData {
   id: String;
@@ -56,6 +57,8 @@ interface SchoolTownData {
 function App() {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const location = useLocation();
+  const { classLevel, subclass, email } = location.state || {};
   const schoolName = state?.schoolName;
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(
     null
@@ -69,6 +72,9 @@ function App() {
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [teacher_, setTeacher] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(
     null
@@ -79,6 +85,7 @@ function App() {
 
   const [getInfoSelectedAssignment, setGetInfoSelectedAssignment] =
     useState<Assignment | null>(null);
+
   const [authForm, setAuthForm] = useState({
     email: "",
     password: "",
@@ -93,7 +100,9 @@ function App() {
     deadline: format(new Date(), "yyyy-MM-dd"),
     note: "",
     school: schoolTownData?.id,
-    teacher_id: teachers?.id,
+    teacher_id: user?.id,
+    teacher_full_name: teacher_?.full_name || "Teacher",
+    teacher_url_avatar: teacher_?.avatar_url || "",
   });
   useEffect(() => {
     if (schoolTownData?.id) {
@@ -129,6 +138,76 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Inside your component function
+  
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchTeacherData = async () => {
+      try {
+        setLoading(true);
+
+        // Get current user
+        const { data: authData, error: authError } =
+          await supabase.auth.getUser();
+
+        if (authError) throw authError;
+
+        if (!authData.user) {
+          throw new Error("Not authenticated");
+        }
+
+        // Fetch teacher data
+        const { data: teacherData, error: teacherError } = await supabase
+          .from("teachers")
+          .select("*")
+          .eq("id", authData.user.id)
+          .single();
+
+        if (teacherError) throw teacherError;
+
+        // Update state if component is still mounted
+        if (isMounted) {
+          setTeacher(teacherData);
+          setError(null);
+        }
+      } catch (err) {
+        console.error("Error fetching teacher data:", err);
+        if (isMounted) {
+          setError(err.message);
+          setTeacher(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchTeacherData();
+
+    // Set up auth state listener for changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        fetchTeacherData();
+      } else if (event === "SIGNED_OUT") {
+        setTeacher(null);
+      }
+    });
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Then in your render code, you can use:
+  // if (loading) return <LoadingComponent />;
+  // if (error) return <ErrorComponent error={error} />;
+  // return <YourComponent teacher={teacher} />;
+
   // Fetch SchoolTown Data
   const fetchSchoolTownData = async () => {
     // Make sure schoolName is available and not empty
@@ -158,41 +237,6 @@ function App() {
   };
 
 
-  const fetchTeachers = useCallback(async () => {
-    // More robust null checking
-    const teacherId = getInfoSelectedAssignment
-    
-    if (!teacherId) {
-      console.log("No teacher ID available");
-      return;
-    }
-  
-    try {
-      console.log("Fetching data for Teacher ID:", teacherId);
-      
-      const { data, error } = await supabase
-        .from("teachers")
-        .select("*")
-        .eq("id", teacherId)
-        .single(); // Use .single() to get first result directly
-  
-      if (error) {
-        console.error("Error fetching teachers:", error);
-        return;
-      }
-  
-      console.log("Teacher Data:", data);
-      setTeachers(data);
-    } catch (error) {
-      console.error("Unexpected error:", error);
-    }
-  }, [getInfoSelectedAssignment?.teacher?.id]); // Specific dependency
-  
-  useEffect(() => {
-    if (getInfoSelectedAssignment?.teacher?.id) {
-      fetchTeachers();
-    }
-  }, [fetchTeachers, getInfoSelectedAssignment?.teacher?.id]);
 
   // Effect hook to trigger the fetch
   useEffect(() => {
@@ -200,8 +244,6 @@ function App() {
       fetchSchoolTownData();
     }
   }, [schoolName]); // Only re-run when schoolName changes
-
- 
 
   useEffect(() => {
     if (user) {
@@ -309,11 +351,13 @@ function App() {
         title: "",
         subject: "Mathematics",
         class_level: 1,
-        subclass: "",
+        subclass: "A",
         deadline: format(new Date(), "yyyy-MM-dd"),
         note: "",
         school: schoolTownData?.id,
-        teacher_id: teachers?.id,
+        teacher_id: user?.id,
+        teacher_full_name: teacher_?.full_name || "Annalina",
+        teacher_url_avatar: teacher_?.avatar_url || "",
       });
       fetchAssignments();
     } catch (error: any) {
@@ -355,7 +399,9 @@ function App() {
       deadline: format(new Date(assignment.deadline), "yyyy-MM-dd"),
       note: assignment.note,
       school: schoolTownData?.id,
-      teacher_id: teachers?.id,
+      teacher_id: user?.id,
+      teacher_full_name: teacher_?.full_name || "Teacher",
+      teacher_url_avatar: teacher_?.avatar_url || "",
     });
     setShowAddForm(true);
   };
@@ -424,7 +470,8 @@ function App() {
         <header className="flex justify-between items-center mb-12">
           <h1 className="text-3xl font-bold">
             {""}
-            <Map /> School: {schoolTownData?.school_full_name}
+            <Map /> School: {schoolTownData?.school_full_name}. User Email:{" "}
+            {email}
           </h1>
           <div className="flex items-center space-x-4">
             {user && (
@@ -436,8 +483,11 @@ function App() {
                 <span>Add Assignment</span>
               </button>
             )}
-            <button className="p-2 rounded-full hover:bg-gray-100">
+            <button className="p-2 rounded-full hover:bg-gray-100 relative">
               <Bell size={24} />
+              {"Test" === "Test" && (
+                <span className="absolute -top-1 -right-1 bg-red-500 rounded-full w-3 h-3"></span>
+              )}
             </button>
             <button className="p-2 rounded-full hover:bg-gray-100">
               <Settings size={24} />
@@ -578,12 +628,15 @@ function App() {
                 {" "}
                 School: {schoolTownData?.school_full_name}
               </p>
-              <p className="text-gray-700"> Teachers: {teachers?.full_name}</p>
+              <p className="text-gray-700">
+                {" "}
+                Teachers: {getInfoSelectedAssignment.teacher_full_name}
+              </p>
               <p className="text-gray-700">
                 {" "}
                 Deadline: {getInfoSelectedAssignment.deadline}
               </p>
-              <p className="text-gray-700"> Teacher ID: {teachers?.id}</p>
+              <p className="text-gray-700"> Teacher ID: {getInfoSelectedAssignment.teacher_id}</p>
               <p className="text-gray-700">
                 {" "}
                 Task ID: {getInfoSelectedAssignment.id}
@@ -736,7 +789,7 @@ function App() {
                         subclass: "",
                         deadline: format(new Date(), "yyyy-MM-dd"),
                         note: "",
-                        teacher_id: teachers?.id,
+                        teacher_id: teacher_?.id,
                       }));
                     }}
                     className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
@@ -943,13 +996,15 @@ function App() {
                         {format(new Date(assignment.deadline), "MMM dd, yyyy")}
                       </span>
                       <div className="flex items-center space-x-2">
-                        {assignment.teacher && (
+                        {assignment.teacher_full_name && (
                           <img
                             src={
-                              assignment.teacher.avatar_url ||
+                              selectedAssignment?.teacher_url_avatar ||
                               "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150"
                             }
-                            alt={assignment.teacher.full_name}
+                            alt={
+                              selectedAssignment?.teacher_full_name || "Teacher"
+                            }
                             className="w-8 h-8 rounded-full border-2 border-white"
                           />
                         )}
@@ -957,18 +1012,24 @@ function App() {
                     </div>
                     {/* Edit and Delete Buttons */}
                     <div className="flex justify-end space-x-2 mt-4">
-                      <button
-                        onClick={() => handleEditAssignment(assignment)}
-                        className="px-3 py-1 bg-green-300 text-white rounded-lg hover:bg-green-600"
-                      >
-                        <Pencil className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteAssignment(assignment.id)}
-                        className="px-3 py-1 bg-red-300 text-white rounded-lg hover:bg-red-600"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
+                      {assignment.teacher_id === user.id && (
+                        <>
+                          <button
+                            onClick={() => handleEditAssignment(assignment)}
+                            className="px-3 py-1 bg-green-300 text-white rounded-lg hover:bg-green-600"
+                          >
+                            <Pencil className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleDeleteAssignment(assignment.id)
+                            }
+                            className="px-3 py-1 bg-red-300 text-white rounded-lg hover:bg-red-600"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </>
+                      )}
                       <button
                         onClick={() => setSelectedAssignment(assignment)}
                         className="px-3 py-1 bg-blue-300 text-white rounded-lg hover:bg-blue-600"

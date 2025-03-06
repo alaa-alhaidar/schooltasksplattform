@@ -59,11 +59,12 @@ const Login = () => {
             state: { 
               schoolName, 
               classLevel, 
-              subclass
+              subclass,
+              email
             } 
           });
         } else {
-          navigate('/dashboard', { state: { schoolName } });
+          navigate('/dashboard', { state: { schoolName, email } });
         }
       }
     } catch (error: any) {
