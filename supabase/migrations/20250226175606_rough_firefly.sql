@@ -65,13 +65,3 @@ CREATE POLICY "Schools can view assignments for their class"
       AND schools.class_level = assignments.class_level::integer
     )
   );
-  CREATE POLICY "Enable read access for all users"
-ON schooltowns FOR SELECT
-USING (true);
-
-CREATE POLICY "Allow public read access"
-ON schooltowns
-FOR SELECT
-USING (true);
-
-ALTER TABLE schooltowns DISABLE ROW LEVEL SECURITY;

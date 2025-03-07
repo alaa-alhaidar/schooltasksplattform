@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase, signIn, signUp, signOut } from './lib/supabase';
-import { Pencil, Trash2, X, Check, Loader2, Info } from 'lucide-react';
+import { Pencil, Trash2, X, Info } from 'lucide-react';
 
 interface Teacher {
   id: string;
@@ -56,7 +56,7 @@ function App() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const location = useLocation();
-    const { classLevel, subclass, email } = location.state || {};
+  const { classLevel, subclass, email } = location.state || {};
   const schoolName = state?.schoolName;
   const emailPrefix_class_level = state?.classLevel;
   const emailPrefix_subclass = state?.subclass;
@@ -64,8 +64,8 @@ function App() {
     null
   );
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedClass, setSelectedClass] = useState<number | null>(null); // State for selected class level
-  const [showClassDropdown, setShowClassDropdown] = useState(false); // State to toggle dropdown
+  const [selectedClass, setSelectedClass] = useState<number | null>(null);
+  const [showClassDropdown, setShowClassDropdown] = useState(false);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [teachers, setTeachers] = useState<Teacher | null>(null);
   const [showAuthForm, setShowAuthForm] = useState(false);
@@ -94,12 +94,10 @@ function App() {
   };
 
   useEffect(() => {
-    // Check current auth status
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -109,9 +107,7 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch SchoolTown Data
   const fetchSchoolTownData = async () => {
-    // Make sure schoolName is available and not empty
     if (!schoolName) {
       console.log('No school name provided');
       return;
@@ -138,7 +134,6 @@ function App() {
   };
 
   const fetchTeachers = async () => {
-    // Ensure getInfoSelectedAssignment.id is available
     if (!getInfoSelectedAssignment?.teacher) {
       console.log('No assignment ID provided');
       return;
@@ -153,7 +148,7 @@ function App() {
       const { data, error } = await supabase
         .from('teachers')
         .select('*')
-        .eq('id', getInfoSelectedAssignment?.teacher?.id); // Use .eq() for exact match
+        .eq('id', getInfoSelectedAssignment?.teacher?.id);
 
       if (error) {
         console.error('Error fetching teachers:', error);
@@ -163,7 +158,7 @@ function App() {
       console.log('Teachers:', data[0]);
 
       if (data && data.length > 0) {
-        setTeachers(data[0]); // Set the first teacher in the array
+        setTeachers(data[0]);
       } else {
         setTeachers(data[0]);
       }
@@ -172,12 +167,11 @@ function App() {
     }
   };
 
-  // Effect hook to trigger the fetch
   useEffect(() => {
     if (schoolName) {
       fetchSchoolTownData();
     }
-  }, [schoolName]); // Only re-run when schoolName changes
+  }, [schoolName]);
 
   useEffect(() => {
     if (getInfoSelectedAssignment?.teacher) {
@@ -189,10 +183,10 @@ function App() {
     if (user) {
       fetchAssignments();
     }
-  }, [selectedCategory, selectedClass, user]); // Add selectedClass to dependencies
+  }, [selectedCategory, selectedClass, user]);
 
   const fetchAssignments = async () => {
-    if (!schoolTownData?.id) return; // Don't fetch if school ID is missing
+    if (!schoolTownData?.id) return;
 
     const { data, error } = await supabase
       .from('assignments')
@@ -220,12 +214,11 @@ function App() {
     setAssignments(formattedData);
   };
 
-  // Fetch assignments when `schoolTownData.id` changes
   useEffect(() => {
     if (schoolTownData?.id) {
       fetchAssignments();
     }
-  }, [schoolTownData?.id]); // Runs only when school ID is set
+  }, [schoolTownData?.id]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,13 +248,10 @@ function App() {
     navigate('/login');
   };
 
-  // Fixed filtering function that correctly checks class_level
   const filteredAssignments = assignments.filter((assignment) => {
-    // Filter by category
     const matchesCategory =
       selectedCategory === 'All' || assignment.subject === selectedCategory;
 
-    // Filter by class_level - ensure both are numbers for consistent comparison
     const matchesClass =
       selectedClass === null ||
       Number(assignment.class_level) === Number(selectedClass);
@@ -269,7 +259,6 @@ function App() {
     return matchesCategory && matchesClass;
   });
 
-  // Clear class filter function
   const clearClassFilter = () => {
     setSelectedClass(null);
   };
@@ -282,7 +271,7 @@ function App() {
           <Book className="text-white" />
         </div>
         <nav className="flex flex-col items-center space-y-6 flex-1">
-          <button className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl">
+          <button className="p-3 text-black bg-gray-100 rounded-xl">
             <Home size={24} />
           </button>
           <button className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl">
@@ -291,8 +280,18 @@ function App() {
           <button className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl">
             <Book size={24} />
           </button>
-          <button className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl">
-            <Grid size={24} />
+          <button 
+            onClick={() => navigate('/notifications', { 
+              state: { 
+                schoolName, 
+                email, 
+                classLevel: emailPrefix_class_level, 
+                subclass: emailPrefix_subclass 
+              } 
+            })}
+            className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl"
+          >
+            <Bell size={24} />
           </button>
         </nav>
         <div className="mt-auto">
@@ -317,13 +316,13 @@ function App() {
       {/* Main Content */}
       <main className="flex-1 p-8">
         <header className="flex justify-between items-center mb-12">
-        <h1 className="text-3xl font-bold">
-            {""}
+          <h1 className="text-3xl font-bold">
+            {''}
             <Map /> School: {schoolTownData?.school_full_name}, Class:
             {emailPrefix_class_level}
-            {emailPrefix_subclass.toUpperCase()}, Login email: {email}
+            {emailPrefix_subclass.toUpperCase()},
           </h1>
-      
+          <h2>Login email: {email}</h2>
           <div className="flex items-center space-x-4">
             <button className="p-2 rounded-full hover:bg-gray-100">
               <Bell size={24} />
@@ -472,11 +471,6 @@ function App() {
                 {' '}
                 Deadline: {getInfoSelectedAssignment.deadline}
               </p>
-              <p className="text-gray-700"> Teacher ID: {teachers?.id}</p>
-              <p className="text-gray-700">
-                {' '}
-                Task ID: {getInfoSelectedAssignment.id}
-              </p>
               <div className="flex justify-end mt-6">
                 <button
                   onClick={() => setGetInfoSelectedAssignment(null)}
@@ -488,299 +482,7 @@ function App() {
             </div>
           </div>
         )}
-
-        {/* Categories */}
-        <div className="flex space-x-4 mb-12">
-          <button
-            className={`px-4 py-2 rounded-full flex items-center space-x-2 ${
-              selectedCategory === 'All' ? 'bg-black text-white' : 'bg-white'
-            }`}
-            onClick={() => {
-              setSelectedCategory('All');
-              setSelectedClass(null); // Reset class filter
-            }}
-          >
-            <Grid size={20} />
-            <span>All</span>
-          </button>
-          <div className="relative">
-        
-            {showClassDropdown && (
-              <div className="absolute mt-2 w-48 bg-white rounded-lg shadow-lg z-10"></div>
-            )}
-          </div>
-          <button
-            className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === 'Tests' ? 'bg-black text-white' : 'bg-white'
-            }`}
-            onClick={() => setSelectedCategory('Tests')}
-          >
-            <BookCheck size={20} />
-            <span>Tests</span>
-          </button>
-          <button
-            className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === 'Mathematics'
-                ? 'bg-black text-white'
-                : 'bg-white'
-            }`}
-            onClick={() => setSelectedCategory('Mathematics')}
-          >
-            <Box size={20} />
-            <span>Mathematics</span>
-          </button>
-          <button
-            className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === 'German' ? 'bg-black text-white' : 'bg-white'
-            }`}
-            onClick={() => setSelectedCategory('German')}
-          >
-            <Book size={20} />
-            <span>German</span>
-          </button>
-          <button
-            className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === 'English'
-                ? 'bg-black text-white'
-                : 'bg-white'
-            }`}
-            onClick={() => setSelectedCategory('English')}
-          >
-            <Languages size={20} />
-            <span>English</span>
-          </button>
-          <button
-            className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === 'Physic' ? 'bg-black text-white' : 'bg-white'
-            }`}
-            onClick={() => setSelectedCategory('Physic')}
-          >
-            <Atom size={20} />
-            <span>Physic</span>
-          </button>
-          <button
-            className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === 'Chemie' ? 'bg-black text-white' : 'bg-white'
-            }`}
-            onClick={() => setSelectedCategory('Chemie')}
-          >
-            <Beaker size={20} />
-            <span>Chemie</span>
-          </button>
-        </div>
-
-        {/* Active filters indicator */}
-        {selectedClass !== null && (
-          <div className="mb-4 px-4 py-2 bg-gray-100 rounded-lg inline-flex items-center">
-            <span>Filtering: Class {selectedClass}</span>
-            <button
-              onClick={clearClassFilter}
-              className="ml-2 text-gray-600 hover:text-gray-900"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        )}
-
-        {/* Assignments Grid */}
-        <section>
-          <h2 className="text-xl font-semibold mb-6">
-            Assignments{' '}
-            {filteredAssignments.length > 0
-              ? `(${filteredAssignments.length})`
-              : ''}
-          </h2>
-          {user ? (
-            filteredAssignments.length > 0 ? (
-              <div className="grid grid-cols-2 gap-6">
-                {filteredAssignments.map((assignment) => (
-                  <div
-                    key={assignment.id}
-                    className={`rounded-3xl p-6 hover:shadow-lg transition-shadow ${
-                      subjectColors[assignment.subject] || 'bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2 mb-4">
-                      <span
-                        className={`p-2 rounded-xl ${
-                          subjectColors[assignment.subject]
-                        }`}
-                      >
-                        {assignment.subject === 'Mathematics' && (
-                          <Box size={20} />
-                        )}
-                        {assignment.subject === 'German' && <Book size={20} />}
-                        {assignment.subject === 'English' && (
-                          <Languages size={20} />
-                        )}
-                        {assignment.subject === 'Physic' && <Atom size={20} />}
-                        {assignment.subject === 'Chemie' && (
-                          <Beaker size={20} />
-                        )}
-                        {assignment.subject === 'Tests' && (
-                          <BookCheck size={20} />
-                        )}
-                      </span>
-                      <span className="ml-auto bg-white px-3 py-1 rounded-full text-sm">
-                        {assignment.subject}
-                      </span>
-                      <span className="ml-auto bg-white px-3 py-1 rounded-full text-sm">
-                        Class {assignment.class_level}
-                      </span>
-                      <span className="ml-auto bg-white px-3 py-1 rounded-full text-sm">
-                        {assignment.subclass}
-                      </span>
-                    </div>
-                    <h3 className="text-xl font-semibold mb-4">
-                      {assignment.title}
-                    </h3>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">
-                        Due:{' '}
-                        {format(new Date(assignment.deadline), 'MMM dd, yyyy')}
-                      </span>
-                      <div className="flex items-center space-x-2">
-                        {assignment.teacher && (
-                          <img
-                            src={
-                              assignment.teacher.avatar_url ||
-                              'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'
-                            }
-                            alt={assignment.teacher.full_name}
-                            className="w-8 h-8 rounded-full border-2 border-white"
-                          />
-                        )}
-                      </div>
-                    </div>
-                    {/* Edit and Delete Buttons */}
-                    <div className="flex justify-end space-x-2 mt-4">
-                      <button
-                        onClick={() => setSelectedAssignment(assignment)}
-                        className="px-3 py-1 bg-blue-300 text-white rounded-lg hover:bg-blue-600"
-                      >
-                        <Info className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => setGetInfoSelectedAssignment(assignment)}
-                        className="px-3 py-1 bg-purple-300 text-white rounded-lg hover:bg-purple-600"
-                      >
-                        <Square className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-white rounded-lg">
-                <p className="text-gray-600 mb-4">
-                  No assignments found matching your filters
-                </p>
-                <button
-                  onClick={() => {
-                    setSelectedCategory('All');
-                    setSelectedClass(null);
-                  }}
-                  className="px-4 py-2 bg-black text-white rounded-lg"
-                >
-                  Clear Filters
-                </button>
-              </div>
-            )
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-600 mb-4">
-                Please sign in to view assignments
-              </p>
-              <button
-                onClick={() => setShowAuthForm(true)}
-                className="px-6 py-3 bg-black text-white rounded-full inline-flex items-center space-x-2"
-              >
-                <LogIn size={20} />
-                <span>Sign In</span>
-              </button>
-            </div>
-          )}
-        </section>
       </main>
-
-      {/* Right Sidebar */}
-      <aside className="w-80 bg-white p-6">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <img
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150"
-              alt="Profile"
-              className="w-12 h-12 rounded-full"
-            />
-            <div>
-              <h3 className="font-semibold">
-                {user ? authForm.fullName || 'Teacher' : 'Guest'}
-              </h3>
-              <p className="text-sm text-gray-500">
-                {user ? 'Teacher' : 'Please sign in'}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {user && (
-          <>
-            {/* Activity Chart */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold">Activity</h3>
-                <select className="text-sm bg-transparent">
-                  <option>Year</option>
-                  <option>Month</option>
-                  <option>Week</option>
-                </select>
-              </div>
-              <div className="h-40 bg-gray-50 rounded-xl"></div>
-            </div>
-
-            {/* Recent Assignments */}
-            <div>
-              <h3 className="font-semibold mb-4">Recent Assignments</h3>
-              <div className="space-y-4">
-                {assignments.slice(0, 5).map((assignment) => (
-                  <div
-                    key={assignment.id}
-                    className="bg-gray-50 rounded-xl p-4"
-                  >
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="p-2 bg-white rounded-xl">
-                        {assignment.subject === 'Mathematics' && (
-                          <Box size={20} />
-                        )}
-                        {assignment.subject === 'German' && <Book size={20} />}
-                        {assignment.subject === 'English' && (
-                          <Languages size={20} />
-                        )}
-                        {assignment.subject === 'Physic' && <Atom size={20} />}
-                        {assignment.subject === 'Chemie' && (
-                          <Beaker size={20} />
-                        )}
-                        {assignment.subject === 'Tests' && (
-                          <BookCheck size={20} />
-                        )}
-                      </span>
-                      <span className="text-sm">{assignment.subject}</span>
-                      <span className="ml-auto">
-                        Class {assignment.class_level}
-                      </span>
-                    </div>
-                    <h4 className="font-semibold">{assignment.title}</h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Due:{' '}
-                      {format(new Date(assignment.deadline), 'MMM dd, yyyy')}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-      </aside>
     </div>
   );
 }

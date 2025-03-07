@@ -80,20 +80,8 @@ CREATE POLICY "Teachers can update their own assignments"
   USING (auth.uid() = teacher_id);
 
 -- Create enum type for subjects
-CREATE TYPE subject_type AS ENUM ('Mathematics', 'German', 'English', 'Science', 
-'History', 'Art', 'Physic', 'Chemie', 'Tests');
+CREATE TYPE subject_type AS ENUM ('Mathematics', 'German', 'English', 'Science', 'History', 'Art');
 
 -- Add some initial subjects
 ALTER TABLE assignments 
   ALTER COLUMN subject TYPE subject_type USING subject::subject_type;
-
-CREATE POLICY "Enable read access for all users"
-ON schooltowns FOR SELECT
-USING (true);
-
-CREATE POLICY "Allow public read access"
-ON schooltowns
-FOR SELECT
-USING (true);
-
-ALTER TABLE schooltowns DISABLE ROW LEVEL SECURITY;

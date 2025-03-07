@@ -57,14 +57,3 @@ CREATE POLICY "Students can view assignments for their class"
   FOR SELECT
   TO authenticated
   USING (true);
-
-  CREATE POLICY "Enable read access for all users"
-ON schooltowns FOR SELECT
-USING (true);
-
-CREATE POLICY "Allow public read access"
-ON schooltowns
-FOR SELECT
-USING (true);
-
-ALTER TABLE schooltowns DISABLE ROW LEVEL SECURITY;

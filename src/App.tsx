@@ -999,7 +999,7 @@ function App() {
                         {assignment.teacher_full_name && (
                           <img
                             src={
-                              selectedAssignment?.teacher_url_avatar ||
+                              assignment?.teacher_url_avatar ||
                               "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150"
                             }
                             alt={

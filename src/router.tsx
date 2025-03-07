@@ -2,7 +2,8 @@ import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom"
 import { useEffect, useState } from "react";
 import App from "./App";
 import Login from "./pages/Login";
-import Schools from "./Schools"; // Import the Schools component
+import Schools from "./Schools";
+import Notifications from "./pages/Notifications";
 import { supabase } from "./lib/supabase";
 
 // ProtectedRoute component to handle auth logic
@@ -61,12 +62,19 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
-  // Add the new schools route
   {
     path: "/schools",
     element: (
       <ProtectedRoute>
         <Schools />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/notifications",
+    element: (
+      <ProtectedRoute>
+        <Notifications />
       </ProtectedRoute>
     ),
   },
