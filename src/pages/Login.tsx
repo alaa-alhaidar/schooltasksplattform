@@ -64,7 +64,10 @@ const Login = () => {
             } 
           });
         } else {
-          navigate('/dashboard', { state: { schoolName, email } });
+          navigate('/dashboard', { state: { schoolName, 
+            classLevel, 
+            subclass,
+            email } });
         }
       }
     } catch (error: any) {

@@ -60,6 +60,8 @@ function App() {
   const location = useLocation();
   const { classLevel, subclass, email } = location.state || {};
   const schoolName = state?.schoolName;
+  const emailPrefix_class_level = state?.classLevel;
+  const emailPrefix_subclass = state?.subclass;
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(
     null
   );
@@ -72,7 +74,7 @@ function App() {
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [teacher_, setTeacher] = useState(null);
+  const [teacherData, setTeacher] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -92,18 +94,31 @@ function App() {
     fullName: "",
   });
 
-  const [newAssignment, setNewAssignment] = useState({
-    title: "",
-    subject: "Mathematics",
-    class_level: 1,
-    subclass: "A",
-    deadline: format(new Date(), "yyyy-MM-dd"),
-    note: "",
-    school: schoolTownData?.id,
-    teacher_id: user?.id,
-    teacher_full_name: teacher_?.full_name || "Teacher",
-    teacher_url_avatar: teacher_?.avatar_url || "",
-  });
+  // Initialize state with a function that will be called when the component mounts
+// This is cleaner but still has the same timing issue
+const [newAssignment, setNewAssignment] = useState(() => ({
+  title: "",
+  subject: "Mathematics",
+  class_level: 1,
+  subclass: "A",
+  deadline: format(new Date(), "yyyy-MM-dd"),
+  note: "",
+  school: schoolTownData?.id,
+  teacher_id: user?.id,
+  teacher_full_name: "Teacher", // Still default value initially
+  teacher_url_avatar: "blank", // Still default value initially
+}));
+
+// Still need the useEffect to update once data is available
+useEffect(() => {
+  if (teacherData) {
+    setNewAssignment(prev => ({
+      ...prev,
+      teacher_full_name: teacherData.full_name || "Teacher",
+      teacher_url_avatar: teacherData.avatar_url || "blank"
+    }));
+  }
+}, [teacherData]);
   useEffect(() => {
     if (schoolTownData?.id) {
       setNewAssignment((prev) => ({
@@ -164,7 +179,10 @@ function App() {
           .select("*")
           .eq("id", authData.user.id)
           .single();
-
+          setTeacher(teacherData);
+        console.log("Teacher Data:", teacherData);
+        console.log("Teacher Data:", teacherData.full_name);
+        console.log("Teacher Data:", teacherData.avatar_url);
         if (teacherError) throw teacherError;
 
         // Update state if component is still mounted
@@ -251,6 +269,7 @@ function App() {
     }
   }, [selectedCategory, selectedClass, user]); // Add selectedClass to dependencies
 
+  // Fetch assignments from the database
   const fetchAssignments = async () => {
     if (!schoolTownData?.id) return; // Don't fetch if school ID is missing
 
@@ -356,8 +375,8 @@ function App() {
         note: "",
         school: schoolTownData?.id,
         teacher_id: user?.id,
-        teacher_full_name: teacher_?.full_name || "Annalina",
-        teacher_url_avatar: teacher_?.avatar_url || "",
+        teacher_full_name: teacherData?.full_name || "Annalina",
+        teacher_url_avatar: teacherData?.avatar_url || "",
       });
       fetchAssignments();
     } catch (error: any) {
@@ -400,8 +419,8 @@ function App() {
       note: assignment.note,
       school: schoolTownData?.id,
       teacher_id: user?.id,
-      teacher_full_name: teacher_?.full_name || "Teacher",
-      teacher_url_avatar: teacher_?.avatar_url || "",
+      teacher_full_name: teacherData?.full_name || "Teacher",
+      teacher_url_avatar: teacherData?.avatar_url || "",
     });
     setShowAddForm(true);
   };
@@ -444,6 +463,19 @@ function App() {
           </button>
           <button className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl">
             <Grid size={24} />
+          </button>
+           <button 
+            onClick={() => navigate('/notifications', { 
+              state: { 
+                schoolName, 
+                email, 
+                classLevel: emailPrefix_class_level, 
+                subclass: emailPrefix_subclass 
+              } 
+            })}
+            className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl"
+          >
+            <Bell size={24} />
           </button>
         </nav>
         <div className="mt-auto">
