@@ -186,7 +186,12 @@ function App() {
   }, [selectedCategory, selectedClass, user]);
 
   const fetchAssignments = async () => {
-    if (!schoolTownData?.id) return;
+    if (
+      !schoolTownData?.id ||
+      !emailPrefix_class_level ||
+      !emailPrefix_subclass
+    )
+      return;
 
     const { data, error } = await supabase
       .from('assignments')
@@ -197,8 +202,8 @@ function App() {
       `
       )
       .eq('school', schoolTownData.id)
-      .eq('class_level'.toLowerCase(), emailPrefix_class_level)
-      .eq('subclass', emailPrefix_subclass.toUpperCase());
+      .eq('class_level', emailPrefix_class_level)
+      .eq('subclass', emailPrefix_subclass?.toUpperCase());
 
     if (error) {
       console.error('Error fetching assignments:', error);
@@ -280,15 +285,19 @@ function App() {
           <button className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl">
             <Book size={24} />
           </button>
-          <button 
-            onClick={() => navigate('/notifications', { 
-              state: { 
-                schoolName, 
-                email, 
-                classLevel: emailPrefix_class_level, 
-                subclass: emailPrefix_subclass 
-              } 
-            })}
+          <button
+            onClick={() => {
+              if (emailPrefix_class_level && emailPrefix_subclass) {
+                navigate('/schools_notifications', {
+                  state: {
+                    schoolName,
+                    email,
+                    classLevel: emailPrefix_class_level,
+                    subclass: emailPrefix_subclass,
+                  },
+                });
+              }
+            }}
             className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl"
           >
             <Bell size={24} />
@@ -320,7 +329,7 @@ function App() {
             {''}
             <Map /> School: {schoolTownData?.school_full_name}, Class:
             {emailPrefix_class_level}
-            {emailPrefix_subclass.toUpperCase()},
+            {emailPrefix_subclass?.toUpperCase()},
           </h1>
           <h2>Login email: {email}</h2>
           <div className="flex items-center space-x-4">

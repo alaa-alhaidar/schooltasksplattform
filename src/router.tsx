@@ -1,10 +1,16 @@
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
-import { useEffect, useState } from "react";
-import App from "./App";
-import Login from "./pages/Login";
-import Schools from "./Schools";
-import Notifications from "./pages/Notifications";
-import { supabase } from "./lib/supabase";
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import App from './App';
+import Login from './pages/Login';
+import Schools from './Schools';
+import Notifications from './pages/Notifications';
+import Schedule from './Schedule';
+import Schools_notifications from './pages/Schools_notifications';
+import { supabase } from './lib/supabase';
 
 // ProtectedRoute component to handle auth logic
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -17,15 +23,15 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       setUser(data.session?.user || null);
       setLoading(false);
     };
-    
+
     checkAuth();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user || null);
-      }
-    );
-    
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
     return () => subscription.unsubscribe();
   }, []);
 
@@ -47,15 +53,15 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 // Create router with routes
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: '/',
     element: <Navigate to="/login" replace />,
   },
   {
-    path: "/login",
+    path: '/login',
     element: <Login />,
   },
   {
-    path: "/dashboard",
+    path: '/dashboard',
     element: (
       <ProtectedRoute>
         <App />
@@ -63,7 +69,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/schools",
+    path: '/schools',
     element: (
       <ProtectedRoute>
         <Schools />
@@ -71,10 +77,26 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/notifications",
+    path: '/notifications',
     element: (
       <ProtectedRoute>
         <Notifications />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/schools_notifications',
+    element: (
+      <ProtectedRoute>
+        <Schools_notifications />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/Schedule',
+    element: (
+      <ProtectedRoute>
+        <Schedule />
       </ProtectedRoute>
     ),
   },

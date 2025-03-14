@@ -122,6 +122,8 @@ function Notifications() {
           .from('notifications')
           .select('*')
           .eq('school_id', schoolTownData.id)
+          .eq('class_level', classLevel)
+          .eq('subclass', subclass)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -167,11 +169,13 @@ function Notifications() {
   };
 
   const handleHomeNavigation = () => {
-    if (schoolName && email) {
-      navigate('/dashboard', {
+    if (classLevel && subclass) {
+      navigate('/schools', {
         state: {
           schoolName,
           email,
+          classLevel,
+          subclass,
         },
       });
     } else {
@@ -261,7 +265,7 @@ function Notifications() {
             <Map className="inline-block mr-2" />
             Notifications - {schoolTownData?.school_full_name || schoolName}
             <span className="ml-4 text-lg text-gray-600">
-              Login Email: {email}
+            Login Email: {email} Class {classLevel}
               {subclass?.toUpperCase()}
             </span>
           </h1>

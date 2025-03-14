@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import {
+  User,
   Bell,
   Settings,
   Home,
@@ -22,10 +23,10 @@ import {
   School,
   Square,
   BookCheck,
-} from "lucide-react";
-import { format } from "date-fns";
-import { supabase, signIn, signUp, signOut } from "./lib/supabase";
-import { Pencil, Trash2, X, Info } from "lucide-react";
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { supabase, signIn, signUp, signOut } from './lib/supabase';
+import { Pencil, Trash2, X, Info } from 'lucide-react';
 
 interface Teacher {
   id: string;
@@ -65,11 +66,10 @@ function App() {
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(
     null
   );
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedClass, setSelectedClass] = useState<number | null>(null); // State for selected class level
   const [showClassDropdown, setShowClassDropdown] = useState(false); // State to toggle dropdown
   const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [teachers, setTeachers] = useState<Teacher | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
@@ -89,36 +89,36 @@ function App() {
     useState<Assignment | null>(null);
 
   const [authForm, setAuthForm] = useState({
-    email: "",
-    password: "",
-    fullName: "",
+    email: '',
+    password: '',
+    fullName: '',
   });
 
   // Initialize state with a function that will be called when the component mounts
-// This is cleaner but still has the same timing issue
-const [newAssignment, setNewAssignment] = useState(() => ({
-  title: "",
-  subject: "Mathematics",
-  class_level: 1,
-  subclass: "A",
-  deadline: format(new Date(), "yyyy-MM-dd"),
-  note: "",
-  school: schoolTownData?.id,
-  teacher_id: user?.id,
-  teacher_full_name: "Teacher", // Still default value initially
-  teacher_url_avatar: "blank", // Still default value initially
-}));
+  // This is cleaner but still has the same timing issue
+  const [newAssignment, setNewAssignment] = useState(() => ({
+    title: '',
+    subject: 'Mathematics',
+    class_level: 1,
+    subclass: 'A',
+    deadline: format(new Date(), 'yyyy-MM-dd'),
+    note: '',
+    school: schoolTownData?.id,
+    teacher_id: user?.id,
+    teacher_full_name: 'Teacher', // Still default value initially
+    teacher_url_avatar: 'blank', // Still default value initially
+  }));
 
-// Still need the useEffect to update once data is available
-useEffect(() => {
-  if (teacherData) {
-    setNewAssignment(prev => ({
-      ...prev,
-      teacher_full_name: teacherData.full_name || "Teacher",
-      teacher_url_avatar: teacherData.avatar_url || "blank"
-    }));
-  }
-}, [teacherData]);
+  // Still need the useEffect to update once data is available
+  useEffect(() => {
+    if (teacherData) {
+      setNewAssignment((prev) => ({
+        ...prev,
+        teacher_full_name: teacherData.full_name || 'Teacher',
+        teacher_url_avatar: teacherData.avatar_url || 'blank',
+      }));
+    }
+  }, [teacherData]);
   useEffect(() => {
     if (schoolTownData?.id) {
       setNewAssignment((prev) => ({
@@ -129,12 +129,12 @@ useEffect(() => {
   }, [schoolTownData?.id]);
 
   const subjectColors: { [key: string]: string } = {
-    Mathematics: "bg-blue-100",
-    German: "bg-orange-100",
-    English: "bg-green-100",
-    Physic: "bg-purple-100",
-    Chemie: "bg-yellow-100",
-    Tests: "bg-red-200",
+    Mathematics: 'bg-blue-100',
+    German: 'bg-orange-100',
+    English: 'bg-green-100',
+    Physic: 'bg-purple-100',
+    Chemie: 'bg-yellow-100',
+    Tests: 'bg-red-200',
   };
 
   useEffect(() => {
@@ -154,7 +154,6 @@ useEffect(() => {
   }, []);
 
   // Inside your component function
-  
 
   useEffect(() => {
     let isMounted = true;
@@ -170,19 +169,19 @@ useEffect(() => {
         if (authError) throw authError;
 
         if (!authData.user) {
-          throw new Error("Not authenticated");
+          throw new Error('Not authenticated');
         }
 
         // Fetch teacher data
         const { data: teacherData, error: teacherError } = await supabase
-          .from("teachers")
-          .select("*")
-          .eq("id", authData.user.id)
+          .from('teachers')
+          .select('*')
+          .eq('id', authData.user.id)
           .single();
-          setTeacher(teacherData);
-        console.log("Teacher Data:", teacherData);
-        console.log("Teacher Data:", teacherData.full_name);
-        console.log("Teacher Data:", teacherData.avatar_url);
+        setTeacher(teacherData);
+        console.log('Teacher Data:', teacherData);
+        console.log('Teacher Data:', teacherData.full_name);
+        console.log('Teacher Data:', teacherData.avatar_url);
         if (teacherError) throw teacherError;
 
         // Update state if component is still mounted
@@ -191,7 +190,7 @@ useEffect(() => {
           setError(null);
         }
       } catch (err) {
-        console.error("Error fetching teacher data:", err);
+        console.error('Error fetching teacher data:', err);
         if (isMounted) {
           setError(err.message);
           setTeacher(null);
@@ -207,9 +206,9 @@ useEffect(() => {
 
     // Set up auth state listener for changes
     const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         fetchTeacherData();
-      } else if (event === "SIGNED_OUT") {
+      } else if (event === 'SIGNED_OUT') {
         setTeacher(null);
       }
     });
@@ -230,19 +229,19 @@ useEffect(() => {
   const fetchSchoolTownData = async () => {
     // Make sure schoolName is available and not empty
     if (!schoolName) {
-      console.log("No school name provided");
+      console.log('No school name provided');
       return;
     }
 
     try {
-      console.log("Fetching data for school:", schoolName);
+      console.log('Fetching data for school:', schoolName);
 
       const { data, error } = await supabase
-        .from("schooltowns")
-        .select("*")
-        .ilike("schoolname", schoolName);
+        .from('schooltowns')
+        .select('*')
+        .ilike('schoolname', schoolName);
 
-      console.log("Data:", data);
+      console.log('Data:', data);
 
       if (data && data.length > 0) {
         setSchoolTownData(data[0] as SchoolTownData);
@@ -253,8 +252,6 @@ useEffect(() => {
     } finally {
     }
   };
-
-
 
   // Effect hook to trigger the fetch
   useEffect(() => {
@@ -274,17 +271,17 @@ useEffect(() => {
     if (!schoolTownData?.id) return; // Don't fetch if school ID is missing
 
     const { data, error } = await supabase
-      .from("assignments")
+      .from('assignments')
       .select(
         `
         *,
         teacher:teachers(id, full_name, avatar_url)
       `
       )
-      .eq("school", schoolTownData.id);
+      .eq('school', schoolTownData.id);
 
     if (error) {
-      console.error("Error fetching assignments:", error);
+      console.error('Error fetching assignments:', error);
       return;
     }
 
@@ -321,7 +318,7 @@ useEffect(() => {
         if (error) throw error;
       }
       setShowAuthForm(false);
-      setAuthForm({ email: "", password: "", fullName: "" });
+      setAuthForm({ email: '', password: '', fullName: '' });
     } catch (error: any) {
       setAuthError(error.message);
     }
@@ -329,7 +326,7 @@ useEffect(() => {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/login");
+    navigate('/login');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -344,17 +341,17 @@ useEffect(() => {
       if (editingAssignment) {
         // Update existing assignment
         const { error } = await supabase
-          .from("assignments")
+          .from('assignments')
           .update({
             ...newAssignment,
             teacher_id: user.id,
           })
-          .eq("id", editingAssignment.id);
+          .eq('id', editingAssignment.id);
 
         if (error) throw error;
       } else {
         // Create new assignment
-        const { error } = await supabase.from("assignments").insert([
+        const { error } = await supabase.from('assignments').insert([
           {
             ...newAssignment,
             teacher_id: user.id,
@@ -367,38 +364,38 @@ useEffect(() => {
       setShowAddForm(false);
       setEditingAssignment(null);
       setNewAssignment({
-        title: "",
-        subject: "Mathematics",
+        title: '',
+        subject: 'Mathematics',
         class_level: 1,
-        subclass: "A",
-        deadline: format(new Date(), "yyyy-MM-dd"),
-        note: "",
+        subclass: 'A',
+        deadline: format(new Date(), 'yyyy-MM-dd'),
+        note: '',
         school: schoolTownData?.id,
         teacher_id: user?.id,
-        teacher_full_name: teacherData?.full_name || "Annalina",
-        teacher_url_avatar: teacherData?.avatar_url || "",
+        teacher_full_name: teacherData?.full_name || 'Annalina',
+        teacher_url_avatar: teacherData?.avatar_url || '',
       });
       fetchAssignments();
     } catch (error: any) {
-      console.error("Error saving assignment:", error);
-      alert("Failed to save assignment");
+      console.error('Error saving assignment:', error);
+      alert('Failed to save assignment');
     }
   };
 
   const handleDeleteAssignment = async (assignmentId: string) => {
     if (!user) {
-      alert("You must be logged in to delete an assignment.");
+      alert('You must be logged in to delete an assignment.');
       return;
     }
 
     const { error } = await supabase
-      .from("assignments")
+      .from('assignments')
       .delete()
-      .eq("id", assignmentId);
+      .eq('id', assignmentId);
 
     if (error) {
-      console.error("Error deleting assignment:", error);
-      alert("Failed to delete assignment");
+      console.error('Error deleting assignment:', error);
+      alert('Failed to delete assignment');
       return;
     }
 
@@ -415,12 +412,12 @@ useEffect(() => {
       subject: assignment.subject,
       class_level: assignment.class_level,
       subclass: assignment.subclass,
-      deadline: format(new Date(assignment.deadline), "yyyy-MM-dd"),
+      deadline: format(new Date(assignment.deadline), 'yyyy-MM-dd'),
       note: assignment.note,
       school: schoolTownData?.id,
       teacher_id: user?.id,
-      teacher_full_name: teacherData?.full_name || "Teacher",
-      teacher_url_avatar: teacherData?.avatar_url || "",
+      teacher_full_name: teacherData?.full_name || 'Teacher',
+      teacher_url_avatar: teacherData?.avatar_url || '',
     });
     setShowAddForm(true);
   };
@@ -429,7 +426,7 @@ useEffect(() => {
   const filteredAssignments = assignments.filter((assignment) => {
     // Filter by category
     const matchesCategory =
-      selectedCategory === "All" || assignment.subject === selectedCategory;
+      selectedCategory === 'All' || assignment.subject === selectedCategory;
 
     // Filter by class_level - ensure both are numbers for consistent comparison
     const matchesClass =
@@ -443,6 +440,62 @@ useEffect(() => {
   const clearClassFilter = () => {
     setSelectedClass(null);
   };
+  // Add these state variables to your component
+  const [showAddNotificationForm, setShowAddNotificationForm] = useState(false);
+  const [newNotification, setNewNotification] = useState({
+    title: '',
+    message: '',
+    class_level: '',
+    subclass: '',
+    teacher_id: user?.id,
+    school_id: user?.school_id,
+    teacher_full_name: '',
+    teacher_avatar_url: '',
+  });
+
+  // Add this handler function to your component
+  const handleNotificationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      // Create a new notification using Supabase
+      const { data, error } = await supabase
+        .from('notifications')
+        .insert([
+          {
+            title: newNotification.title,
+            message: newNotification.message,
+            teacher_id: user?.id,
+            school_id: schoolTownData?.id,
+            class_level: newNotification.class_level,
+            subclass: newNotification.subclass,
+            teacher_full_name: teacherData?.full_name || '',
+            teacher_avatar_url: teacherData?.avatar_url || '',
+          },
+        ]);
+
+      if (error) throw error;
+
+      // Reset form
+      setShowAddNotificationForm(false);
+      setNewNotification({
+        title: '',
+        message: '',
+        class_level: '',
+        subclass: '',
+        teacher_id: user?.id,
+        school_id: schoolTownData?.id,
+        teacher_full_name: '',
+        teacher_avatar_url: '',
+      });
+
+      // Show success message
+      alert('Notification created successfully!');
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      alert('Failed to create notification. Please try again.');
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-[#FAF7F7]">
@@ -455,7 +508,19 @@ useEffect(() => {
           <button className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl">
             <Home size={24} />
           </button>
-          <button className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl">
+          <button
+            onClick={() =>
+              navigate('/Schedule', {
+                state: {
+                  schoolName,
+                  email,
+                  classLevel: emailPrefix_class_level,
+                  subclass: emailPrefix_subclass,
+                },
+              })
+            }
+            className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl"
+          >
             <Calendar size={24} />
           </button>
           <button className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl">
@@ -464,15 +529,17 @@ useEffect(() => {
           <button className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl">
             <Grid size={24} />
           </button>
-           <button 
-            onClick={() => navigate('/notifications', { 
-              state: { 
-                schoolName, 
-                email, 
-                classLevel: emailPrefix_class_level, 
-                subclass: emailPrefix_subclass 
-              } 
-            })}
+          <button
+            onClick={() =>
+              navigate('/notifications', {
+                state: {
+                  schoolName,
+                  email,
+                  classLevel: emailPrefix_class_level,
+                  subclass: emailPrefix_subclass,
+                },
+              })
+            }
             className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl"
           >
             <Bell size={24} />
@@ -501,8 +568,8 @@ useEffect(() => {
       <main className="flex-1 p-8">
         <header className="flex justify-between items-center mb-12">
           <h1 className="text-3xl font-bold">
-            {""}
-            <Map /> School: {schoolTownData?.school_full_name}. User Email:{" "}
+            {''}
+            <Map /> School: {schoolTownData?.school_full_name}. User Email:{' '}
             {email}
           </h1>
           <div className="flex items-center space-x-4">
@@ -515,9 +582,18 @@ useEffect(() => {
                 <span>Add Assignment</span>
               </button>
             )}
+            {user && (
+              <button
+                onClick={() => setShowAddNotificationForm(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-black text-white rounded-full"
+              >
+                <Plus size={20} />
+                <span>Add Notification</span>
+              </button>
+            )}
             <button className="p-2 rounded-full hover:bg-gray-100 relative">
               <Bell size={24} />
-              {"Test" === "Test" && (
+              {'Test' === 'Test' && (
                 <span className="absolute -top-1 -right-1 bg-red-500 rounded-full w-3 h-3"></span>
               )}
             </button>
@@ -532,7 +608,7 @@ useEffect(() => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-8 w-[400px]">
               <h2 className="text-2xl font-bold mb-6">
-                {isSignUp ? "Create Account" : "Sign In"}
+                {isSignUp ? 'Create Account' : 'Sign In'}
               </h2>
               {authError && (
                 <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
@@ -590,7 +666,7 @@ useEffect(() => {
                     onClick={() => setIsSignUp(!isSignUp)}
                     className="text-sm text-gray-600 hover:text-gray-900"
                   >
-                    {isSignUp ? "Already have an account?" : "Need an account?"}
+                    {isSignUp ? 'Already have an account?' : 'Need an account?'}
                   </button>
                   <div className="space-x-3">
                     <button
@@ -604,7 +680,7 @@ useEffect(() => {
                       type="submit"
                       className="px-4 py-2 bg-black text-white rounded-lg"
                     >
-                      {isSignUp ? "Sign Up" : "Sign In"}
+                      {isSignUp ? 'Sign Up' : 'Sign In'}
                     </button>
                   </div>
                 </div>
@@ -618,8 +694,8 @@ useEffect(() => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-8 w-[900px] max-h-96 overflow-y-auto">
               <h2 className="text-2xl font-bold mb-6">
-                {selectedAssignment.subject}, Class{" "}
-                {selectedAssignment.class_level} {selectedAssignment.subclass},{" "}
+                {selectedAssignment.subject}, Class{' '}
+                {selectedAssignment.class_level} {selectedAssignment.subclass},{' '}
                 {selectedAssignment.title}.
               </h2>
               <p className="text-gray-700">{selectedAssignment.note}</p>
@@ -640,9 +716,9 @@ useEffect(() => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-purple-200 rounded-2xl p-8 w-[900px] max-h-96 overflow-y-auto">
               <h2 className="text-2xl font-bold mb-6">
-                {getInfoSelectedAssignment.subject}, Class{" "}
-                {getInfoSelectedAssignment.class_level}{" "}
-                {getInfoSelectedAssignment.subclass},{" "}
+                {getInfoSelectedAssignment.subject}, Class{' '}
+                {getInfoSelectedAssignment.class_level}{' '}
+                {getInfoSelectedAssignment.subclass},{' '}
                 {getInfoSelectedAssignment.title}.
               </h2>
               <p className="text-gray-700">
@@ -652,25 +728,28 @@ useEffect(() => {
                 Topic: {getInfoSelectedAssignment.subject}
               </p>
               <p className="text-gray-700">
-                {" "}
+                {' '}
                 Class:{getInfoSelectedAssignment.class_level}
                 {getInfoSelectedAssignment.subclass}
               </p>
               <p className="text-gray-700">
-                {" "}
+                {' '}
                 School: {schoolTownData?.school_full_name}
               </p>
               <p className="text-gray-700">
-                {" "}
+                {' '}
                 Teachers: {getInfoSelectedAssignment.teacher_full_name}
               </p>
               <p className="text-gray-700">
-                {" "}
+                {' '}
                 Deadline: {getInfoSelectedAssignment.deadline}
               </p>
-              <p className="text-gray-700"> Teacher ID: {getInfoSelectedAssignment.teacher_id}</p>
               <p className="text-gray-700">
-                {" "}
+                {' '}
+                Teacher ID: {getInfoSelectedAssignment.teacher_id}
+              </p>
+              <p className="text-gray-700">
+                {' '}
                 Task ID: {getInfoSelectedAssignment.id}
               </p>
               <div className="flex justify-end mt-6">
@@ -690,7 +769,7 @@ useEffect(() => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-8 w-[500px]">
               <h2 className="text-2xl font-bold mb-6">
-                {editingAssignment ? "Edit Assignment" : "Add New Assignment"}
+                {editingAssignment ? 'Edit Assignment' : 'Add New Assignment'}
               </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -767,7 +846,7 @@ useEffect(() => {
                     }
                     className="w-full px-3 py-2 border rounded-lg"
                   >
-                    {["A", "B", "C"].map((level) => (
+                    {['A', 'B', 'C'].map((level) => (
                       <option key={level} value={level}>
                         SUB Class {level}
                       </option>
@@ -815,14 +894,134 @@ useEffect(() => {
                       setEditingAssignment(null);
                       setNewAssignment((prev) => ({
                         ...prev,
-                        title: "",
-                        subject: "Mathematics",
+                        title: '',
+                        subject: 'Mathematics',
                         class_level: 1,
-                        subclass: "",
-                        deadline: format(new Date(), "yyyy-MM-dd"),
-                        note: "",
-                        teacher_id: teacher_?.id,
+                        subclass: '',
+                        deadline: format(new Date(), 'yyyy-MM-dd'),
+                        note: '',
+                        teacher_id: user?.id,
                       }));
+                    }}
+                    
+                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-black text-white rounded-lg"
+                  >
+                    {editingAssignment ? 'Update Assignment' : 'Create Assignment'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        {/* Add Notification Form Modal */}
+        {showAddNotificationForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-8 w-[500px]">
+              <h2 className="text-2xl font-bold mb-6">Add New Notification</h2>
+              <form onSubmit={handleNotificationSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    value={newNotification.title}
+                    onChange={(e) =>
+                      setNewNotification({
+                        ...newNotification,
+                        title: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border rounded-lg"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Message
+                  </label>
+                  <textarea
+                    value={newNotification.message}
+                    onChange={(e) =>
+                      setNewNotification({
+                        ...newNotification,
+                        message: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border rounded-lg"
+                    rows="4"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Class Level
+                  </label>
+                  <select
+                    value={newNotification.class_level}
+                    onChange={(e) =>
+                      setNewNotification({
+                        ...newNotification,
+                        class_level: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border rounded-lg"
+                    required
+                  >
+                    <option value="">Select Class Level</option>
+                    {[1, 2, 3, 4, 5, 6].map((level) => (
+                      <option key={level} value={level}>
+                        Class {level}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Sub Class Level
+                  </label>
+                  <select
+                    value={newNotification.subclass}
+                    onChange={(e) =>
+                      setNewNotification({
+                        ...newNotification,
+                        subclass: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border rounded-lg"
+                    required
+                  >
+                    <option value="">Select Sub Class</option>
+                    {['A', 'B', 'C'].map((level) => (
+                      <option key={level} value={level}>
+                        SUB Class {level}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddNotificationForm(false);
+                      setNewNotification({
+                        title: '',
+                        message: '',
+                        class_level: '',
+                        subclass: '',
+                        teacher_id: user?.id,
+                        school_id: user?.school_id,
+                        teacher_full_name: '',
+                        teacher_avatar_url: '',
+                      });
                     }}
                     className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
                   >
@@ -833,24 +1032,21 @@ useEffect(() => {
                     type="submit"
                     className="px-4 py-2 bg-black text-white rounded-lg"
                   >
-                    {editingAssignment
-                      ? "Update Assignment"
-                      : "Create Assignment"}
+                    Send Notification
                   </button>
                 </div>
               </form>
             </div>
           </div>
         )}
-
         {/* Categories */}
         <div className="flex space-x-4 mb-12">
           <button
             className={`px-4 py-2 rounded-full flex items-center space-x-2 ${
-              selectedCategory === "All" ? "bg-black text-white" : "bg-white"
+              selectedCategory === 'All' ? 'bg-black text-white' : 'bg-white'
             }`}
             onClick={() => {
-              setSelectedCategory("All");
+              setSelectedCategory('All');
               setSelectedClass(null); // Reset class filter
             }}
           >
@@ -860,12 +1056,12 @@ useEffect(() => {
           <div className="relative">
             <button
               className={`px-4 py-2 rounded-full flex items-center space-x-2 ${
-                selectedClass !== null ? "bg-black text-white" : "bg-white"
+                selectedClass !== null ? 'bg-black text-white' : 'bg-white'
               }`}
               onClick={() => setShowClassDropdown(!showClassDropdown)}
             >
               <span>
-                {selectedClass !== null ? `Class ${selectedClass}` : "Class"}
+                {selectedClass !== null ? `Class ${selectedClass}` : 'Class'}
               </span>
               <ChevronDown size={20} />
             </button>
@@ -899,58 +1095,58 @@ useEffect(() => {
           </div>
           <button
             className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === "Tests" ? "bg-black text-white" : "bg-white"
+              selectedCategory === 'Tests' ? 'bg-black text-white' : 'bg-white'
             }`}
-            onClick={() => setSelectedCategory("Tests")}
+            onClick={() => setSelectedCategory('Tests')}
           >
             <BookCheck size={20} />
             <span>Tests</span>
           </button>
           <button
             className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === "Mathematics"
-                ? "bg-black text-white"
-                : "bg-white"
+              selectedCategory === 'Mathematics'
+                ? 'bg-black text-white'
+                : 'bg-white'
             }`}
-            onClick={() => setSelectedCategory("Mathematics")}
+            onClick={() => setSelectedCategory('Mathematics')}
           >
             <Box size={20} />
             <span>Mathematics</span>
           </button>
           <button
             className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === "German" ? "bg-black text-white" : "bg-white"
+              selectedCategory === 'German' ? 'bg-black text-white' : 'bg-white'
             }`}
-            onClick={() => setSelectedCategory("German")}
+            onClick={() => setSelectedCategory('German')}
           >
             <Book size={20} />
             <span>German</span>
           </button>
           <button
             className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === "English"
-                ? "bg-black text-white"
-                : "bg-white"
+              selectedCategory === 'English'
+                ? 'bg-black text-white'
+                : 'bg-white'
             }`}
-            onClick={() => setSelectedCategory("English")}
+            onClick={() => setSelectedCategory('English')}
           >
             <Languages size={20} />
             <span>English</span>
           </button>
           <button
             className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === "Physic" ? "bg-black text-white" : "bg-white"
+              selectedCategory === 'Physic' ? 'bg-black text-white' : 'bg-white'
             }`}
-            onClick={() => setSelectedCategory("Physic")}
+            onClick={() => setSelectedCategory('Physic')}
           >
             <Atom size={20} />
             <span>Physic</span>
           </button>
           <button
             className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === "Chemie" ? "bg-black text-white" : "bg-white"
+              selectedCategory === 'Chemie' ? 'bg-black text-white' : 'bg-white'
             }`}
-            onClick={() => setSelectedCategory("Chemie")}
+            onClick={() => setSelectedCategory('Chemie')}
           >
             <Beaker size={20} />
             <span>Chemie</span>
@@ -973,10 +1169,10 @@ useEffect(() => {
         {/* Assignments Grid */}
         <section>
           <h2 className="text-xl font-semibold mb-6">
-            Assignments{" "}
+            Assignments{' '}
             {filteredAssignments.length > 0
               ? `(${filteredAssignments.length})`
-              : ""}
+              : ''}
           </h2>
           {user ? (
             filteredAssignments.length > 0 ? (
@@ -985,7 +1181,7 @@ useEffect(() => {
                   <div
                     key={assignment.id}
                     className={`rounded-3xl p-6 hover:shadow-lg transition-shadow ${
-                      subjectColors[assignment.subject] || "bg-gray-100"
+                      subjectColors[assignment.subject] || 'bg-gray-100'
                     }`}
                   >
                     <div className="flex items-center space-x-2 mb-4">
@@ -994,18 +1190,18 @@ useEffect(() => {
                           subjectColors[assignment.subject]
                         }`}
                       >
-                        {assignment.subject === "Mathematics" && (
+                        {assignment.subject === 'Mathematics' && (
                           <Box size={20} />
                         )}
-                        {assignment.subject === "German" && <Book size={20} />}
-                        {assignment.subject === "English" && (
+                        {assignment.subject === 'German' && <Book size={20} />}
+                        {assignment.subject === 'English' && (
                           <Languages size={20} />
                         )}
-                        {assignment.subject === "Physic" && <Atom size={20} />}
-                        {assignment.subject === "Chemie" && (
+                        {assignment.subject === 'Physic' && <Atom size={20} />}
+                        {assignment.subject === 'Chemie' && (
                           <Beaker size={20} />
                         )}
-                        {assignment.subject === "Tests" && (
+                        {assignment.subject === 'Tests' && (
                           <BookCheck size={20} />
                         )}
                       </span>
@@ -1024,18 +1220,23 @@ useEffect(() => {
                     </h3>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">
-                        Due:{" "}
-                        {format(new Date(assignment.deadline), "MMM dd, yyyy")}
+                        Due:{' '}
+                        {format(new Date(assignment.deadline), 'MMM dd, yyyy')}
+                        <span className="flex text-sm text-gray-600">
+                          <User size={16} className="flex mr-1" />:{' '}
+                          {assignment?.teacher_full_name}
+                        </span>
                       </span>
+
                       <div className="flex items-center space-x-2">
                         {assignment.teacher_full_name && (
                           <img
                             src={
                               assignment?.teacher_url_avatar ||
-                              "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150"
+                              'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'
                             }
                             alt={
-                              selectedAssignment?.teacher_full_name || "Teacher"
+                              selectedAssignment?.teacher_full_name || 'Teacher'
                             }
                             className="w-8 h-8 rounded-full border-2 border-white"
                           />
@@ -1085,7 +1286,7 @@ useEffect(() => {
                 </p>
                 <button
                   onClick={() => {
-                    setSelectedCategory("All");
+                    setSelectedCategory('All');
                     setSelectedClass(null);
                   }}
                   className="px-4 py-2 bg-black text-white rounded-lg"
@@ -1116,16 +1317,16 @@ useEffect(() => {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <img
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150"
+              src={teacherData?.avatar_url}
               alt="Profile"
               className="w-12 h-12 rounded-full"
             />
             <div>
               <h3 className="font-semibold">
-                {user ? authForm.fullName || "Teacher" : "Guest"}
+                {user ? user.email || 'Teacher' : 'Guest'}
               </h3>
               <p className="text-sm text-gray-500">
-                {user ? "Teacher" : "Please sign in"}
+                {teacherData ? 'Teacher' : 'Please sign in'}
               </p>
             </div>
           </div>
@@ -1157,18 +1358,18 @@ useEffect(() => {
                   >
                     <div className="flex items-center space-x-2 mb-2">
                       <span className="p-2 bg-white rounded-xl">
-                        {assignment.subject === "Mathematics" && (
+                        {assignment.subject === 'Mathematics' && (
                           <Box size={20} />
                         )}
-                        {assignment.subject === "German" && <Book size={20} />}
-                        {assignment.subject === "English" && (
+                        {assignment.subject === 'German' && <Book size={20} />}
+                        {assignment.subject === 'English' && (
                           <Languages size={20} />
                         )}
-                        {assignment.subject === "Physic" && <Atom size={20} />}
-                        {assignment.subject === "Chemie" && (
+                        {assignment.subject === 'Physic' && <Atom size={20} />}
+                        {assignment.subject === 'Chemie' && (
                           <Beaker size={20} />
                         )}
-                        {assignment.subject === "Tests" && (
+                        {assignment.subject === 'Tests' && (
                           <BookCheck size={20} />
                         )}
                       </span>
@@ -1179,8 +1380,8 @@ useEffect(() => {
                     </div>
                     <h4 className="font-semibold">{assignment.title}</h4>
                     <p className="text-sm text-gray-600 mt-1">
-                      Due:{" "}
-                      {format(new Date(assignment.deadline), "MMM dd, yyyy")}
+                      Due:{' '}
+                      {format(new Date(assignment.deadline), 'MMM dd, yyyy')}
                     </p>
                   </div>
                 ))}
