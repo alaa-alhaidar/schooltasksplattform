@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
 import {
   User,
   Bell,
@@ -27,6 +26,7 @@ import {
 import { format } from 'date-fns';
 import { supabase, signIn, signUp, signOut } from './lib/supabase';
 import { Pencil, Trash2, X, Info } from 'lucide-react';
+import { useAppIdentity } from './layout/AppLayout';
 
 interface Teacher {
   id: string;
@@ -57,12 +57,9 @@ interface SchoolTownData {
 }
 function App() {
   const navigate = useNavigate();
-  const { state } = useLocation();
-  const location = useLocation();
-  const { classLevel, subclass, email } = location.state || {};
-  const schoolName = state?.schoolName;
-  const emailPrefix_class_level = state?.classLevel;
-  const emailPrefix_subclass = state?.subclass;
+  const { schoolName, classLevel, subclass, email } = useAppIdentity();
+  const emailPrefix_class_level = classLevel;
+  const emailPrefix_subclass = subclass;
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(
     null
   );

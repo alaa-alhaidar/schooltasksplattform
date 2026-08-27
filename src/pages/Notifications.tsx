@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Bell,
   Settings,
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase, signOut } from '../lib/supabase';
+import { useAppIdentity } from '../layout/AppLayout';
 
 interface Notification {
   id: string;
@@ -36,8 +37,7 @@ interface SchoolTownData {
 
 function Notifications() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { schoolName, email, classLevel, subclass } = location.state || {};
+  const { schoolName, email, classLevel, subclass } = useAppIdentity();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Bell,
   Settings,
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase, signOut } from './lib/supabase';
+import { useAppIdentity } from './layout/AppLayout';
 
 interface ScheduleItem {
   id: string;
@@ -192,8 +193,7 @@ const sampleSchedule: ScheduleItem[] = [
 
 function WeeklySchedule() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { schoolName, email, classLevel, subclass } = location.state || {};
+  const { schoolName, email, classLevel, subclass } = useAppIdentity();
 
   const [schedule, setSchedule] = useState<ScheduleItem[]>(sampleSchedule);
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(

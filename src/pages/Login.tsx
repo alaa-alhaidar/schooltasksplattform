@@ -20,7 +20,9 @@ const Login = () => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
-        navigate('/dashboard');
+        const email = data.session.user.email || '';
+        const isStudent = /^\d+[a-z]@/i.test(email);
+        navigate(isStudent ? '/schools' : '/dashboard');
       }
     };
     checkUser();
@@ -70,8 +72,12 @@ const Login = () => {
             email } });
         }
       }
-    } catch (error: any) {
-      setAuthError(error.message || 'An error occurred. Please try again.');
+    } catch (error: unknown) {
+      setAuthError(
+        error instanceof Error
+          ? error.message
+          : 'An error occurred. Please try again.'
+      );
     } finally {
       setLoading(false);
     }

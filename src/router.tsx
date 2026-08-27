@@ -11,11 +11,13 @@ import Notifications from './pages/Notifications';
 import Schedule from './Schedule';
 import Schools_notifications from './pages/Schools_notifications';
 import { supabase } from './lib/supabase';
+import type { User } from '@supabase/supabase-js';
+import AppLayout from './layout/AppLayout';
 
 // ProtectedRoute component to handle auth logic
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -61,44 +63,21 @@ const router = createBrowserRouter([
     element: <Login />,
   },
   {
-    path: '/dashboard',
     element: (
       <ProtectedRoute>
-        <App />
+        <AppLayout />
       </ProtectedRoute>
     ),
-  },
-  {
-    path: '/schools',
-    element: (
-      <ProtectedRoute>
-        <Schools />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/notifications',
-    element: (
-      <ProtectedRoute>
-        <Notifications />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/schools_notifications',
-    element: (
-      <ProtectedRoute>
-        <Schools_notifications />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/Schedule',
-    element: (
-      <ProtectedRoute>
-        <Schedule />
-      </ProtectedRoute>
-    ),
+    children: [
+      { path: '/dashboard', element: <App /> },
+      { path: '/schools', element: <Schools /> },
+      { path: '/notifications', element: <Notifications /> },
+      {
+        path: '/schools_notifications',
+        element: <Schools_notifications />,
+      },
+      { path: '/Schedule', element: <Schedule /> },
+    ],
   },
 ]);
 
