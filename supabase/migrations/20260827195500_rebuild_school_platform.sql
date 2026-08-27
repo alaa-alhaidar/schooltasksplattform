@@ -153,6 +153,7 @@ create trigger on_auth_user_created
 
 -- The frontend derives the school slug from the email domain.
 insert into public.schooltowns (schoolname, school_full_name)
-values ('scholl', 'Scholl')
+values
+  ('scholl', 'Scholl'),
+  ('hotmail', 'Scholl')
 on conflict (schoolname) do nothing;
-
