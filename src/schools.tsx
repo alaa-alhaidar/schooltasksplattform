@@ -246,6 +246,15 @@ export default function Schools() {
       })),
     [items]
   );
+  const otherItems = useMemo(
+    () =>
+      items.filter(
+        (item) =>
+          item.item_type !== 'announcement' &&
+          (item.weekday === null || item.weekday < 1 || item.weekday > 5)
+      ),
+    [items]
+  );
 
   const navigationState = {
     schoolName: schoolData?.schoolname,
@@ -391,6 +400,16 @@ export default function Schools() {
                   </div>
                 ))}
               </div>
+              {otherItems.length > 0 && (
+                <div className="mt-4 rounded-3xl border border-slate-200 bg-white/60 p-4">
+                  <h3 className="mb-3 font-bold">Weitere Einträge</h3>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {otherItems.map((item) => (
+                      <WeeklyPlanCard key={item.id} item={item} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </section>
           </div>
         )}
