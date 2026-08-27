@@ -6,7 +6,7 @@ import {
 import { useEffect, useState } from 'react';
 import App from './App';
 import Login from './pages/Login';
-import Schools from './Schools';
+import Schools from './schools';
 import Notifications from './pages/Notifications';
 import Schedule from './Schedule';
 import Schools_notifications from './pages/Schools_notifications';
