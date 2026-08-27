@@ -1,251 +1,257 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { addDays, addWeeks, format, getISOWeek, startOfWeek } from 'date-fns';
+import { de } from 'date-fns/locale';
 import {
   Bell,
-  Settings,
+  BookOpen,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
   Home,
-  Calendar,
-  Book,
-  Grid,
-  Box,
-  Video,
-  Plus,
-  LogIn,
   LogOut,
-  UserPlus,
-  Atom,
-  Beaker,
-  ChevronDown,
   Map,
-  Languages,
+  Megaphone,
+  RefreshCw,
   School,
-  Square,
-  BookCheck,
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { supabase, signIn, signUp, signOut } from './lib/supabase';
-import { Pencil, Trash2, X, Info } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { signOut, supabase } from './lib/supabase';
 
-interface Teacher {
+interface Profile {
   id: string;
+  email: string;
   full_name: string;
-  avatar_url: string;
+  role: 'student' | 'parent' | 'teacher' | 'school_admin';
 }
 
-interface Assignment {
+interface ClassData {
   id: string;
-  title: string;
-  subject: string;
-  deadline: string;
-  teacher: string;
-  student_count: number;
-  class_level: string;
+  name: string;
+  class_level: number;
   subclass: string;
-  note: string;
-  school: string;
+  school_id: string;
 }
-interface SchoolTownData {
-  id: String;
+
+interface SchoolData {
+  id: string;
   schoolname: string;
-  address: string;
-  website: string;
   school_full_name: string;
 }
-function App() {
-  const navigate = useNavigate();
-  const { state } = useLocation();
-  const location = useLocation();
-  const { classLevel, subclass, email } = location.state || {};
-  const schoolName = state?.schoolName;
-  const emailPrefix_class_level = state?.classLevel;
-  const emailPrefix_subclass = state?.subclass;
-  const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(
-    null
+
+interface WeeklyPlan {
+  id: string;
+  title: string;
+  week_start: string;
+  status: 'draft' | 'published' | 'archived';
+}
+
+interface WeeklyPlanItem {
+  id: string;
+  item_type: 'assignment' | 'announcement' | 'event' | 'schedule';
+  title: string;
+  description: string;
+  subject: string | null;
+  due_at: string | null;
+  weekday: number | null;
+  sort_order: number;
+}
+
+const weekdays = [
+  { value: 1, label: 'Montag' },
+  { value: 2, label: 'Dienstag' },
+  { value: 3, label: 'Mittwoch' },
+  { value: 4, label: 'Donnerstag' },
+  { value: 5, label: 'Freitag' },
+];
+
+const subjectStyles: Record<string, string> = {
+  Mathematics: 'border-blue-300 bg-blue-50 text-blue-900',
+  German: 'border-orange-300 bg-orange-50 text-orange-900',
+  English: 'border-emerald-300 bg-emerald-50 text-emerald-900',
+  Physic: 'border-violet-300 bg-violet-50 text-violet-900',
+  Chemie: 'border-yellow-300 bg-yellow-50 text-yellow-900',
+  Tests: 'border-red-300 bg-red-50 text-red-900',
+};
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
+
+function WeeklyPlanCard({ item }: { item: WeeklyPlanItem }) {
+  const isAnnouncement = item.item_type === 'announcement';
+  const cardStyle = isAnnouncement
+    ? 'border-amber-300 bg-amber-50 text-amber-950'
+    : subjectStyles[item.subject || ''] ||
+      'border-slate-200 bg-white text-slate-900';
+
+  return (
+    <article className={`rounded-2xl border p-4 shadow-sm ${cardStyle}`}>
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          {isAnnouncement ? (
+            <Megaphone className="shrink-0" size={18} />
+          ) : (
+            <BookOpen className="shrink-0" size={18} />
+          )}
+          <h3 className="font-semibold leading-tight">{item.title}</h3>
+        </div>
+        {item.subject && (
+          <span className="shrink-0 rounded-full bg-white/70 px-2 py-1 text-xs font-medium">
+            {item.subject}
+          </span>
+        )}
+      </div>
+      {item.description && (
+        <p className="text-sm leading-6 opacity-80">{item.description}</p>
+      )}
+      {item.due_at && (
+        <div className="mt-3 flex items-center gap-1.5 text-xs font-medium opacity-70">
+          <Clock3 size={14} />
+          Abgabe {format(new Date(item.due_at), 'dd.MM.yyyy, HH:mm', { locale: de })}
+        </div>
+      )}
+    </article>
   );
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedClass, setSelectedClass] = useState<number | null>(null);
-  const [showClassDropdown, setShowClassDropdown] = useState(false);
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [teachers, setTeachers] = useState<Teacher | null>(null);
-  const [showAuthForm, setShowAuthForm] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [authForm, setAuthForm] = useState({
-    email: '',
-    password: '',
-    fullName: '',
-  });
+}
 
-  const [selectedAssignment, setSelectedAssignment] =
-    useState<Assignment | null>(null);
+export default function Schools() {
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [classData, setClassData] = useState<ClassData | null>(null);
+  const [schoolData, setSchoolData] = useState<SchoolData | null>(null);
+  const [weekStart, setWeekStart] = useState(() =>
+    startOfWeek(new Date(), { weekStartsOn: 1 })
+  );
+  const [plan, setPlan] = useState<WeeklyPlan | null>(null);
+  const [items, setItems] = useState<WeeklyPlanItem[]>([]);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loadingPlan, setLoadingPlan] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [getInfoSelectedAssignment, setGetInfoSelectedAssignment] =
-    useState<Assignment | null>(null);
-
-  const subjectColors: { [key: string]: string } = {
-    Mathematics: 'bg-blue-100',
-    German: 'bg-orange-100',
-    English: 'bg-green-100',
-    Physic: 'bg-purple-100',
-    Chemie: 'bg-yellow-100',
-    Tests: 'bg-red-200',
-  };
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const fetchSchoolTownData = async () => {
-    if (!schoolName) {
-      console.log('No school name provided');
-      return;
-    }
-
+  const loadIdentity = useCallback(async () => {
+    setLoadingProfile(true);
+    setError(null);
     try {
-      console.log('Fetching data for school:', schoolName);
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) throw new Error('Bitte melde dich erneut an.');
 
-      const { data, error } = await supabase
-        .from('schooltowns')
-        .select('*')
-        .ilike('schoolname', schoolName);
+      const { data: profileRow, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, email, full_name, role')
+        .eq('id', user.id)
+        .single();
+      if (profileError) throw profileError;
+      setProfile(profileRow as Profile);
 
-      console.log('Data:', data);
-
-      if (data && data.length > 0) {
-        setSchoolTownData(data[0] as SchoolTownData);
-      } else {
-        setSchoolTownData(null);
-      }
-    } catch (error) {
-    } finally {
-    }
-  };
-
-  const fetchTeachers = async () => {
-    if (!getInfoSelectedAssignment?.teacher) {
-      console.log('No assignment ID provided');
-      return;
-    }
-
-    try {
-      console.log(
-        'Fetching data for Teacher ID:',
-        getInfoSelectedAssignment.teacher
-      );
-
-      const { data, error } = await supabase
-        .from('teachers')
-        .select('*')
-        .eq('id', getInfoSelectedAssignment?.teacher?.id);
-
-      if (error) {
-        console.error('Error fetching teachers:', error);
+      const { data: membership, error: membershipError } = await supabase
+        .from('class_memberships')
+        .select('class_id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (membershipError) throw membershipError;
+      if (!membership) {
+        setClassData(null);
+        setSchoolData(null);
         return;
       }
 
-      console.log('Teachers:', data[0]);
+      const { data: classRow, error: classError } = await supabase
+        .from('classes')
+        .select('id, name, class_level, subclass, school_id')
+        .eq('id', membership.class_id)
+        .single();
+      if (classError) throw classError;
+      setClassData(classRow as ClassData);
 
-      if (data && data.length > 0) {
-        setTeachers(data[0]);
-      } else {
-        setTeachers(data[0]);
-      }
-    } catch (error) {
-      console.error('Unexpected error:', error);
+      const { data: schoolRow, error: schoolError } = await supabase
+        .from('schooltowns')
+        .select('id, schoolname, school_full_name')
+        .eq('id', classRow.school_id)
+        .single();
+      if (schoolError) throw schoolError;
+      setSchoolData(schoolRow as SchoolData);
+    } catch (loadError: unknown) {
+      setError(
+        getErrorMessage(
+          loadError,
+          'Profil und Klasse konnten nicht geladen werden.'
+        )
+      );
+    } finally {
+      setLoadingProfile(false);
     }
-  };
+  }, []);
 
-  useEffect(() => {
-    if (schoolName) {
-      fetchSchoolTownData();
-    }
-  }, [schoolName]);
-
-  useEffect(() => {
-    if (getInfoSelectedAssignment?.teacher) {
-      fetchTeachers();
-    }
-  }, [getInfoSelectedAssignment?.teacher]);
-
-  useEffect(() => {
-    if (user) {
-      fetchAssignments();
-    }
-  }, [selectedCategory, selectedClass, user]);
-
-  const fetchAssignments = async () => {
-    if (
-      !schoolTownData?.id ||
-      !emailPrefix_class_level ||
-      !emailPrefix_subclass
-    )
-      return;
-
-    const { data, error } = await supabase
-      .from('assignments')
-      .select(
-        `
-        *,
-        teacher:teachers(id, full_name, avatar_url)
-      `
-      )
-      .eq('school', schoolTownData.id)
-      .eq('class_level', emailPrefix_class_level)
-      .eq('subclass', emailPrefix_subclass?.toUpperCase());
-
-    if (error) {
-      console.error('Error fetching assignments:', error);
-      return;
-    }
-
-    const formattedData =
-      data?.map((item) => ({
-        ...item,
-        class_level: Number(item.class_level),
-      })) || [];
-
-    setAssignments(formattedData);
-  };
-
-  useEffect(() => {
-    if (schoolTownData?.id) {
-      fetchAssignments();
-    }
-  }, [schoolTownData?.id]);
-
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthError(null);
-
+  const loadWeek = useCallback(async () => {
+    if (!classData) return;
+    setLoadingPlan(true);
+    setError(null);
     try {
-      if (isSignUp) {
-        const { error } = await signUp(
-          authForm.email,
-          authForm.password,
-          authForm.fullName
-        );
-        if (error) throw error;
-      } else {
-        const { error } = await signIn(authForm.email, authForm.password);
-        if (error) throw error;
+      const { data: planRow, error: planError } = await supabase
+        .from('weekly_plans')
+        .select('id, title, week_start, status')
+        .eq('class_id', classData.id)
+        .eq('week_start', format(weekStart, 'yyyy-MM-dd'))
+        .eq('status', 'published')
+        .maybeSingle();
+      if (planError) throw planError;
+      if (!planRow) {
+        setPlan(null);
+        setItems([]);
+        return;
       }
-      setShowAuthForm(false);
-      setAuthForm({ email: '', password: '', fullName: '' });
-    } catch (error: any) {
-      setAuthError(error.message);
+      setPlan(planRow as WeeklyPlan);
+
+      const { data: planItems, error: itemsError } = await supabase
+        .from('weekly_plan_items')
+        .select('id, item_type, title, description, subject, due_at, weekday, sort_order')
+        .eq('weekly_plan_id', planRow.id)
+        .order('sort_order', { ascending: true });
+      if (itemsError) throw itemsError;
+      setItems((planItems || []) as WeeklyPlanItem[]);
+    } catch (loadError: unknown) {
+      setError(
+        getErrorMessage(loadError, 'Der Wochenplan konnte nicht geladen werden.')
+      );
+    } finally {
+      setLoadingPlan(false);
     }
+  }, [classData, weekStart]);
+
+  useEffect(() => {
+    loadIdentity();
+  }, [loadIdentity]);
+
+  useEffect(() => {
+    loadWeek();
+  }, [loadWeek]);
+
+  const announcements = useMemo(
+    () => items.filter((item) => item.item_type === 'announcement'),
+    [items]
+  );
+  const itemsByDay = useMemo(
+    () =>
+      weekdays.map((day) => ({
+        ...day,
+        items: items.filter(
+          (item) => item.item_type !== 'announcement' && item.weekday === day.value
+        ),
+      })),
+    [items]
+  );
+
+  const navigationState = {
+    schoolName: schoolData?.schoolname,
+    email: profile?.email,
+    classLevel: classData?.class_level,
+    subclass: classData?.subclass,
   };
 
   const handleSignOut = async () => {
@@ -253,247 +259,142 @@ function App() {
     navigate('/login');
   };
 
-  const filteredAssignments = assignments.filter((assignment) => {
-    const matchesCategory =
-      selectedCategory === 'All' || assignment.subject === selectedCategory;
-
-    const matchesClass =
-      selectedClass === null ||
-      Number(assignment.class_level) === Number(selectedClass);
-
-    return matchesCategory && matchesClass;
-  });
-
-  const clearClassFilter = () => {
-    setSelectedClass(null);
-  };
+  if (loadingProfile) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#faf8f8]">
+        <RefreshCw className="animate-spin" size={32} />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex min-h-screen bg-[#FAF7F7]">
-      {/* Sidebar */}
-      <aside className="w-20 bg-white flex flex-col items-center py-8 space-y-8">
-        <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center">
-          <Book className="text-white" />
+    <div className="flex min-h-screen bg-[#faf8f8] text-slate-950">
+      <aside className="fixed inset-y-0 left-0 z-10 flex w-20 flex-col items-center border-r border-slate-100 bg-white py-8">
+        <div className="mb-10 flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white">
+          <BookOpen size={24} />
         </div>
-        <nav className="flex flex-col items-center space-y-6 flex-1">
-          <button className="p-3 text-black bg-gray-100 rounded-xl">
-            <Home size={24} />
-          </button>
-          <button className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl">
-            <Calendar size={24} />
-          </button>
-          <button className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl">
-            <Book size={24} />
+        <nav className="flex flex-1 flex-col items-center gap-5">
+          <button className="rounded-2xl bg-slate-100 p-3" title="Wochenplan">
+            <Home size={23} />
           </button>
           <button
-            onClick={() => {
-              if (emailPrefix_class_level && emailPrefix_subclass) {
-                navigate('/schools_notifications', {
-                  state: {
-                    schoolName,
-                    email,
-                    classLevel: emailPrefix_class_level,
-                    subclass: emailPrefix_subclass,
-                  },
-                });
-              }
-            }}
-            className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl"
+            className="rounded-2xl p-3 text-slate-400 hover:bg-slate-100 hover:text-black"
+            title="Stundenplan"
+            onClick={() => navigate('/Schedule', { state: navigationState })}
           >
-            <Bell size={24} />
+            <CalendarDays size={23} />
+          </button>
+          <button
+            className="rounded-2xl p-3 text-slate-400 hover:bg-slate-100 hover:text-black"
+            title="Mitteilungen"
+            onClick={() => navigate('/schools_notifications', { state: navigationState })}
+          >
+            <Bell size={23} />
           </button>
         </nav>
-        <div className="mt-auto">
-          {user ? (
-            <button
-              onClick={handleSignOut}
-              className="p-3 text-gray-400 hover:text-black hover:bg-red-100 rounded-xl"
-            >
-              <LogOut size={24} />
-            </button>
-          ) : (
-            <button
-              onClick={() => setShowAuthForm(true)}
-              className="p-3 text-gray-400 hover:bg-gray-100 rounded-xl"
-            >
-              <LogIn size={24} />
-            </button>
-          )}
-        </div>
+        <button
+          onClick={handleSignOut}
+          className="rounded-2xl p-3 text-slate-400 hover:bg-red-50 hover:text-red-600"
+          title="Abmelden"
+        >
+          <LogOut size={23} />
+        </button>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 p-8">
-        <header className="flex justify-between items-center mb-12">
-          <h1 className="text-3xl font-bold">
-            {''}
-            <Map /> School: {schoolTownData?.school_full_name}, Class:
-            {emailPrefix_class_level}
-            {emailPrefix_subclass?.toUpperCase()},
-          </h1>
-          <h2>Login email: {email}</h2>
-          <div className="flex items-center space-x-4">
-            <button className="p-2 rounded-full hover:bg-gray-100">
-              <Bell size={24} />
+      <main className="ml-20 min-w-0 flex-1 px-6 py-8 md:px-10 lg:px-14">
+        <header className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
+          <div>
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-500">
+              <School size={17} />
+              {schoolData?.school_full_name || 'Meine Schule'}
+              {classData && <><span>·</span><span>{classData.name}</span></>}
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Wochenplan</h1>
+            {profile && (
+              <p className="mt-2 text-sm text-slate-500">
+                Angemeldet als {profile.full_name} ({profile.email})
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+            <button onClick={() => setWeekStart((date) => addWeeks(date, -1))} className="rounded-xl p-2 hover:bg-slate-100" aria-label="Vorherige Woche">
+              <ChevronLeft size={21} />
             </button>
-            <button className="p-2 rounded-full hover:bg-gray-100">
-              <Settings size={24} />
+            <button onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))} className="min-w-48 rounded-xl px-3 py-2 text-center hover:bg-slate-50">
+              <div className="font-semibold">Kalenderwoche {getISOWeek(weekStart)}</div>
+              <div className="text-xs text-slate-500">
+                {format(weekStart, 'dd. MMM', { locale: de })} – {format(addDays(weekStart, 6), 'dd. MMM yyyy', { locale: de })}
+              </div>
+            </button>
+            <button onClick={() => setWeekStart((date) => addWeeks(date, 1))} className="rounded-xl p-2 hover:bg-slate-100" aria-label="Nächste Woche">
+              <ChevronRight size={21} />
             </button>
           </div>
         </header>
 
-        {/* Auth Form Modal */}
-        {showAuthForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl p-8 w-[400px]">
-              <h2 className="text-2xl font-bold mb-6">
-                {isSignUp ? 'Create Account' : 'Sign In'}
-              </h2>
-              {authError && (
-                <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
-                  {authError}
-                </div>
-              )}
-              <form onSubmit={handleAuth} className="space-y-4">
-                {isSignUp && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      value={authForm.fullName}
-                      onChange={(e) =>
-                        setAuthForm({ ...authForm, fullName: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border rounded-lg"
-                      required
-                    />
-                  </div>
-                )}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={authForm.email}
-                    onChange={(e) =>
-                      setAuthForm({ ...authForm, email: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border rounded-lg"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    value={authForm.password}
-                    onChange={(e) =>
-                      setAuthForm({ ...authForm, password: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border rounded-lg"
-                    required
-                  />
-                </div>
-                <div className="flex justify-between items-center mt-6">
-                  <button
-                    type="button"
-                    onClick={() => setIsSignUp(!isSignUp)}
-                    className="text-sm text-gray-600 hover:text-gray-900"
-                  >
-                    {isSignUp ? 'Already have an account?' : 'Need an account?'}
-                  </button>
-                  <div className="space-x-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowAuthForm(false)}
-                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-black text-white rounded-lg"
-                    >
-                      {isSignUp ? 'Sign Up' : 'Sign In'}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
+        {error && (
+          <div className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-5 text-red-800">
+            <p className="font-semibold">Der Wochenplan konnte nicht angezeigt werden.</p>
+            <p className="mt-1 text-sm">{error}</p>
+            <button onClick={loadIdentity} className="mt-4 rounded-xl bg-red-800 px-4 py-2 text-sm font-medium text-white">Erneut versuchen</button>
           </div>
         )}
 
-        {/* Info Assignment Form Modal */}
-        {selectedAssignment && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl p-8 w-[900px] max-h-96 overflow-y-auto">
-              <h2 className="text-2xl font-bold mb-6">
-                {selectedAssignment.subject}, Class{' '}
-                {selectedAssignment.class_level} {selectedAssignment.subclass},{' '}
-                {selectedAssignment.title}.
-              </h2>
-              <p className="text-gray-700">{selectedAssignment.note}</p>
-              <div className="flex justify-end mt-6">
-                <button
-                  onClick={() => setSelectedAssignment(null)}
-                  className="px-4 py-2 bg-black text-white rounded-lg"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
+        {!error && !classData && (
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
+            <Map className="mx-auto mb-4 text-slate-400" size={40} />
+            <h2 className="text-xl font-semibold">Noch keiner Klasse zugeordnet</h2>
+            <p className="mx-auto mt-2 max-w-lg text-slate-500">Bitte lasse dein Konto von der Schule mit einer Klasse oder einem Kind verbinden.</p>
           </div>
         )}
 
-        {/* Info Assignment Form Modal */}
-        {getInfoSelectedAssignment && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-purple-200 rounded-2xl p-8 w-[900px] max-h-96 overflow-y-auto">
-              <h2 className="text-2xl font-bold mb-6">
-                {getInfoSelectedAssignment.subject}, Class{' '}
-                {getInfoSelectedAssignment.class_level}{' '}
-                {getInfoSelectedAssignment.subclass},{' '}
-                {getInfoSelectedAssignment.title}.
-              </h2>
-              <p className="text-gray-700">
-                Tasks: {getInfoSelectedAssignment.title}
-              </p>
-              <p className="text-gray-700">
-                Topic: {getInfoSelectedAssignment.subject}
-              </p>
-              <p className="text-gray-700">
-                {' '}
-                Class:{getInfoSelectedAssignment.class_level}
-                {getInfoSelectedAssignment.subclass}
-              </p>
-              <p className="text-gray-700">
-                {' '}
-                School: {schoolTownData?.school_full_name}
-              </p>
-              <p className="text-gray-700"> Teachers: {teachers?.full_name}</p>
-              <p className="text-gray-700">
-                {' '}
-                Deadline: {getInfoSelectedAssignment.deadline}
-              </p>
-              <div className="flex justify-end mt-6">
-                <button
-                  onClick={() => setGetInfoSelectedAssignment(null)}
-                  className="px-4 py-2 bg-black text-white rounded-lg"
-                >
-                  Close
-                </button>
+        {classData && loadingPlan && (
+          <div className="flex min-h-72 items-center justify-center"><RefreshCw className="animate-spin text-slate-400" size={30} /></div>
+        )}
+
+        {classData && !loadingPlan && !error && !plan && (
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
+            <CalendarDays className="mx-auto mb-4 text-slate-400" size={40} />
+            <h2 className="text-xl font-semibold">Für KW {getISOWeek(weekStart)} ist noch kein Plan veröffentlicht</h2>
+            <p className="mt-2 text-slate-500">Wechsle zu einer anderen Woche oder schaue später erneut vorbei.</p>
+          </div>
+        )}
+
+        {classData && !loadingPlan && plan && (
+          <div className="space-y-8">
+            {announcements.length > 0 && (
+              <section>
+                <div className="mb-4 flex items-center gap-2"><Megaphone size={20} /><h2 className="text-lg font-bold">Wichtige Mitteilungen</h2></div>
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {announcements.map((item) => <WeeklyPlanCard key={item.id} item={item} />)}
+                </div>
+              </section>
+            )}
+
+            <section>
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2"><CalendarDays size={20} /><h2 className="text-lg font-bold">Aufgaben nach Wochentag</h2></div>
+                <span className="text-sm text-slate-500">{items.filter((item) => item.item_type !== 'announcement').length} Einträge</span>
               </div>
-            </div>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                {itemsByDay.map((day) => (
+                  <div key={day.value} className="min-h-52 rounded-3xl border border-slate-200 bg-white/60 p-3">
+                    <div className="mb-3 flex items-center justify-between px-1">
+                      <h3 className="font-bold">{day.label}</h3>
+                      <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-500">{day.items.length}</span>
+                    </div>
+                    <div className="space-y-3">
+                      {day.items.map((item) => <WeeklyPlanCard key={item.id} item={item} />)}
+                      {day.items.length === 0 && <p className="px-1 py-8 text-center text-sm text-slate-400">Keine Einträge</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
           </div>
         )}
       </main>
     </div>
   );
 }
-
-export default App;
