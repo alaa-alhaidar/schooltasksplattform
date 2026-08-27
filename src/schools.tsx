@@ -14,6 +14,7 @@ import {
   Megaphone,
   RefreshCw,
   School,
+  X,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { signOut, supabase } from './lib/supabase';
@@ -77,7 +78,13 @@ const subjectStyles: Record<string, string> = {
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
-function WeeklyPlanCard({ item }: { item: WeeklyPlanItem }) {
+function WeeklyPlanCard({
+  item,
+  onClick,
+}: {
+  item: WeeklyPlanItem;
+  onClick: () => void;
+}) {
   const isAnnouncement = item.item_type === 'announcement';
   const cardStyle = isAnnouncement
     ? 'border-amber-300 bg-amber-50 text-amber-950'
@@ -85,7 +92,11 @@ function WeeklyPlanCard({ item }: { item: WeeklyPlanItem }) {
       'border-slate-200 bg-white text-slate-900';
 
   return (
-    <article className={`rounded-2xl border p-4 shadow-sm ${cardStyle}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full rounded-2xl border p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-black/30 ${cardStyle}`}
+    >
       <div className="mb-2 flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           {isAnnouncement ? (
@@ -110,7 +121,8 @@ function WeeklyPlanCard({ item }: { item: WeeklyPlanItem }) {
           Abgabe {format(new Date(item.due_at), 'dd.MM.yyyy, HH:mm', { locale: de })}
         </div>
       )}
-    </article>
+      <span className="mt-3 block text-xs font-semibold opacity-60">Details anzeigen</span>
+    </button>
   );
 }
 
@@ -127,6 +139,7 @@ export default function Schools() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingPlan, setLoadingPlan] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<WeeklyPlanItem | null>(null);
 
   const loadIdentity = useCallback(async () => {
     setLoadingProfile(true);
@@ -231,6 +244,15 @@ export default function Schools() {
   useEffect(() => {
     loadWeek();
   }, [loadWeek]);
+
+  useEffect(() => {
+    if (!selectedItem) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSelectedItem(null);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [selectedItem]);
 
   const announcements = useMemo(
     () => items.filter((item) => item.item_type === 'announcement'),
@@ -376,7 +398,7 @@ export default function Schools() {
               <section>
                 <div className="mb-4 flex items-center gap-2"><Megaphone size={20} /><h2 className="text-lg font-bold">Wichtige Mitteilungen</h2></div>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {announcements.map((item) => <WeeklyPlanCard key={item.id} item={item} />)}
+                  {announcements.map((item) => <WeeklyPlanCard key={item.id} item={item} onClick={() => setSelectedItem(item)} />)}
                 </div>
               </section>
             )}
@@ -394,7 +416,7 @@ export default function Schools() {
                       <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-500">{day.items.length}</span>
                     </div>
                     <div className="space-y-3">
-                      {day.items.map((item) => <WeeklyPlanCard key={item.id} item={item} />)}
+                      {day.items.map((item) => <WeeklyPlanCard key={item.id} item={item} onClick={() => setSelectedItem(item)} />)}
                       {day.items.length === 0 && <p className="px-1 py-8 text-center text-sm text-slate-400">Keine Einträge</p>}
                     </div>
                   </div>
@@ -405,7 +427,7 @@ export default function Schools() {
                   <h3 className="mb-3 font-bold">Weitere Einträge</h3>
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {otherItems.map((item) => (
-                      <WeeklyPlanCard key={item.id} item={item} />
+                      <WeeklyPlanCard key={item.id} item={item} onClick={() => setSelectedItem(item)} />
                     ))}
                   </div>
                 </div>
@@ -414,6 +436,82 @@ export default function Schools() {
           </div>
         )}
       </main>
+
+      {selectedItem && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelectedItem(null);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="plan-item-title"
+            className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl md:p-8"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  {selectedItem.item_type === 'assignment' ? 'Aufgabe' : selectedItem.item_type === 'announcement' ? 'Mitteilung' : selectedItem.item_type === 'event' ? 'Termin' : 'Stundenplan'}
+                </span>
+                <h2 id="plan-item-title" className="mt-3 text-2xl font-bold">
+                  {selectedItem.title}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedItem(null)}
+                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-black"
+                aria-label="Details schließen"
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            <dl className="mt-6 space-y-4">
+              {selectedItem.subject && (
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Fach</dt>
+                  <dd className="mt-1 font-medium">{selectedItem.subject}</dd>
+                </div>
+              )}
+              {selectedItem.weekday && (
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Tag</dt>
+                  <dd className="mt-1 font-medium">
+                    {weekdays.find((day) => day.value === selectedItem.weekday)?.label || 'Wochenende'}
+                  </dd>
+                </div>
+              )}
+              {selectedItem.due_at && (
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Abgabe</dt>
+                  <dd className="mt-1 flex items-center gap-2 font-medium">
+                    <Clock3 size={17} />
+                    {format(new Date(selectedItem.due_at), 'EEEE, dd. MMMM yyyy · HH:mm', { locale: de })}
+                  </dd>
+                </div>
+              )}
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Beschreibung</dt>
+                <dd className="mt-2 whitespace-pre-wrap leading-7 text-slate-700">
+                  {selectedItem.description || 'Keine zusätzliche Beschreibung vorhanden.'}
+                </dd>
+              </div>
+            </dl>
+
+            <button
+              type="button"
+              onClick={() => setSelectedItem(null)}
+              className="mt-8 w-full rounded-xl bg-black px-5 py-3 font-semibold text-white hover:bg-slate-800"
+            >
+              Schließen
+            </button>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
