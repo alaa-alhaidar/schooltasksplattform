@@ -36,6 +36,16 @@ interface SchoolTownData {
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const timeSlots = ['8:00 - 10:00', '10:00 - 12:00', '12:00 - 14:00'];
+const dayLabels: Record<string, string> = {
+  Monday: 'الاثنين', Tuesday: 'الثلاثاء', Wednesday: 'الأربعاء',
+  Thursday: 'الخميس', Friday: 'الجمعة',
+};
+const scheduleLabels: Record<string, string> = {
+  Mathematics: 'الرياضيات', Science: 'العلوم', History: 'التاريخ',
+  'Language Arts': 'اللغة', 'Physical Education': 'الرياضة', Art: 'الفنون',
+  Music: 'الموسيقى', 'Computer Science': 'الحاسوب',
+  'Social Studies': 'الدراسات الاجتماعية', 'Club Activities': 'الأنشطة',
+};
 
 // Sample data - in production this would come from the database
 const sampleSchedule: ScheduleItem[] = [
@@ -309,16 +319,16 @@ function WeeklySchedule() {
       <div className="min-h-screen flex items-center justify-center bg-[#FAF7F7]">
         <div className="bg-white p-8 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold text-red-600 mb-4">
-            Missing Required Data
+            بيانات مطلوبة مفقودة
           </h2>
           <p className="text-gray-600">
-            Please return to the home page and try again.
+            يرجى العودة إلى الصفحة الرئيسية والمحاولة مرة أخرى.
           </p>
           <button
             onClick={() => navigate('/login')}
             className="mt-4 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
           >
-            Return to Login
+            العودة إلى تسجيل الدخول
           </button>
         </div>
       </div>
@@ -329,13 +339,13 @@ function WeeklySchedule() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FAF7F7]">
         <div className="bg-white p-8 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+          <h2 className="text-2xl font-bold text-red-600 mb-4">خطأ</h2>
           <p className="text-gray-600">{error}</p>
           <button
             onClick={handleHomeNavigation}
             className="mt-4 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
           >
-            Return Home
+            العودة إلى الرئيسية
           </button>
         </div>
       </div>
@@ -386,9 +396,9 @@ function WeeklySchedule() {
         <header className="flex justify-between items-center mb-12">
           <h1 className="text-3xl font-bold">
             <Calendar className="inline-block mr-2" />
-            Weekly Schedule - {schoolTownData?.school_full_name || schoolName}
+            الجدول الأسبوعي - {schoolTownData?.school_full_name || schoolName}
             <span className="ml-4 text-lg text-gray-600">
-              Class: {classLevel || ''}
+              الصف: {classLevel || ''}
               {subclass?.toUpperCase() || ''}
             </span>
           </h1>
@@ -402,9 +412,9 @@ function WeeklySchedule() {
         {/* Weekly Schedule Grid */}
         <section>
           <h2 className="text-xl font-semibold mb-6">
-            Class Timetable{' '}
+            الجدول الدراسي{' '}
             <span className="text-sm font-normal text-gray-500">
-              (All times are in 24-hour format)
+              (جميع الأوقات بنظام 24 ساعة)
             </span>
           </h2>
 
@@ -417,14 +427,14 @@ function WeeklySchedule() {
               {/* Time headers */}
               <div className="grid grid-cols-6 border-b">
                 <div className="p-4 font-semibold text-gray-500 border-r">
-                  Time / Day
+                  الوقت / اليوم
                 </div>
                 {daysOfWeek.map((day) => (
                   <div
                     key={day}
                     className="p-4 font-semibold text-center border-r last:border-r-0"
                   >
-                    {day}
+                    {dayLabels[day] || day}
                   </div>
                 ))}
               </div>
@@ -451,7 +461,7 @@ function WeeklySchedule() {
                           <div
                             className={`rounded-lg p-3 ${item.color} border-l-4 h-full`}
                           >
-                            <h3 className="font-semibold">{item.subject}</h3>
+                            <h3 className="font-semibold">{scheduleLabels[item.subject] || item.subject}</h3>
                             <div className="mt-2 text-sm text-gray-600">
                               <div className="flex items-center">
                                 <User size={14} className="mr-1" />
@@ -466,7 +476,7 @@ function WeeklySchedule() {
                           </div>
                         ) : (
                           <div className="h-full flex items-center justify-center text-gray-400">
-                            Free Period
+                            حصة فارغة
                           </div>
                         )}
                       </div>
@@ -485,12 +495,12 @@ function WeeklySchedule() {
           <div className="flex items-center space-x-4">
             <img
               src= "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150"
-              alt="Profile"
+              alt="الملف الشخصي"
               className="w-12 h-12 rounded-full"
             />
             <div>
-              <h3 className="font-semibold">{user ? email : 'Guest'}</h3>
-              <p className="text-sm text-gray-500">Student</p>
+              <h3 className="font-semibold">{user ? email : 'زائر'}</h3>
+              <p className="text-sm text-gray-500">طالب</p>
             </div>
           </div>
         </div>
@@ -499,7 +509,7 @@ function WeeklySchedule() {
           <>
             {/* Today's Schedule */}
             <div className="mb-8">
-              <h3 className="font-semibold mb-4">Today's Schedule</h3>
+              <h3 className="font-semibold mb-4">جدول اليوم</h3>
               <div className="space-y-4">
                 {schedule
                   .filter(
@@ -515,7 +525,7 @@ function WeeklySchedule() {
                       className={`rounded-lg p-4 ${item.color} border-l-4`}
                     >
                       <div className="flex justify-between items-start">
-                        <h4 className="font-semibold">{item.subject}</h4>
+                        <h4 className="font-semibold">{scheduleLabels[item.subject] || item.subject}</h4>
                         <span className="text-xs bg-white px-2 py-1 rounded-md">
                           {item.start_time} - {item.end_time}
                         </span>
@@ -535,7 +545,7 @@ function WeeklySchedule() {
                     ]
                 ).length === 0 && (
                   <div className="bg-gray-50 rounded-xl p-4 text-center">
-                    <p className="text-sm text-gray-500">No classes today</p>
+                    <p className="text-sm text-gray-500">لا توجد حصص اليوم</p>
                   </div>
                 )}
               </div>
@@ -543,7 +553,7 @@ function WeeklySchedule() {
 
             {/* Subject Summary */}
             <div>
-              <h3 className="font-semibold mb-4">Weekly Summary</h3>
+              <h3 className="font-semibold mb-4">ملخص الأسبوع</h3>
               <div className="space-y-3">
                 {Array.from(new Set(schedule.map((item) => item.subject))).map(
                   (subject) => {
@@ -555,9 +565,9 @@ function WeeklySchedule() {
                         key={subject}
                         className="bg-gray-50 rounded-xl p-3 flex justify-between items-center"
                       >
-                        <span className="text-gray-700">{subject}</span>
+                        <span className="text-gray-700">{scheduleLabels[subject] || subject}</span>
                         <span className="text-sm font-medium bg-white px-2 py-1 rounded-full">
-                          {count} {count === 1 ? 'class' : 'classes'}
+                          {count} {count === 1 ? 'حصة' : 'حصص'}
                         </span>
                       </div>
                     );

@@ -185,16 +185,16 @@ function Notifications() {
       <div className="min-h-screen flex items-center justify-center bg-[#FAF7F7]">
         <div className="bg-white p-8 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold text-red-600 mb-4">
-            Missing Required Data
+            بيانات مطلوبة مفقودة
           </h2>
           <p className="text-gray-600">
-            Please return to the home page and try again.
+            يرجى العودة إلى الصفحة الرئيسية والمحاولة مرة أخرى.
           </p>
           <button
             onClick={() => navigate('/login')}
             className="mt-4 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
           >
-            Return to Login
+            العودة إلى تسجيل الدخول
           </button>
         </div>
       </div>
@@ -205,13 +205,13 @@ function Notifications() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FAF7F7]">
         <div className="bg-white p-8 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+          <h2 className="text-2xl font-bold text-red-600 mb-4">خطأ</h2>
           <p className="text-gray-600">{error}</p>
           <button
             onClick={handleHomeNavigation}
             className="mt-4 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
           >
-            Return Home
+            العودة إلى الرئيسية
           </button>
         </div>
       </div>
@@ -259,9 +259,9 @@ function Notifications() {
         <header className="flex justify-between items-center mb-12">
           <h1 className="text-3xl font-bold">
             <Map className="inline-block mr-2" />
-            Notifications - {schoolTownData?.school_full_name || schoolName}
+            الإشعارات - {schoolTownData?.school_full_name || schoolName}
             <span className="ml-4 text-lg text-gray-600">
-              Login Email: {email}
+              البريد الإلكتروني: {email}
               {subclass?.toUpperCase()}
             </span>
           </h1>
@@ -275,7 +275,7 @@ function Notifications() {
         {/* Notifications Grid */}
         <section>
           <h2 className="text-xl font-semibold mb-6">
-            Messages{' '}
+            الرسائل{' '}
             {notifications.length > 0 ? `(${notifications.length})` : ''}
           </h2>
 
@@ -328,7 +328,7 @@ function Notifications() {
                         </span>
                         {!notification.read && (
                           <span className="ml-auto text-blue-500 text-sm">
-                            New
+                            جديد
                           </span>
                         )}
                       </div>
@@ -340,7 +340,7 @@ function Notifications() {
               {notifications.length === 0 && !loading && (
                 <div className="text-center py-12 bg-white rounded-lg">
                   <Bell size={48} className="mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600">No notifications yet</p>
+                  <p className="text-gray-600">لا توجد إشعارات بعد</p>
                 </div>
               )}
             </div>
@@ -358,8 +358,8 @@ function Notifications() {
               className="w-12 h-12 rounded-full"
             />
             <div>
-              <h3 className="font-semibold">{user ? email : 'Guest'}</h3>
-              <p className="text-sm text-gray-500">Student</p>
+              <h3 className="font-semibold">{user ? email : 'زائر'}</h3>
+              <p className="text-sm text-gray-500">مستخدم</p>
             </div>
           </div>
         </div>
@@ -368,11 +368,11 @@ function Notifications() {
           <>
             {/* Statistics */}
             <div className="mb-8">
-              <h3 className="font-semibold mb-4">Statistics</h3>
+              <h3 className="font-semibold mb-4">الإحصائيات</h3>
               <div className="space-y-4">
                 <div className="bg-gray-50 rounded-xl p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Total Messages</span>
+                    <span className="text-gray-600">إجمالي الرسائل</span>
                     <span className="font-semibold">
                       {notifications.length}
                     </span>
@@ -380,7 +380,7 @@ function Notifications() {
                 </div>
                 <div className="bg-gray-50 rounded-xl p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Unread Messages</span>
+                    <span className="text-gray-600">الرسائل غير المقروءة</span>
                     <span className="font-semibold">
                       {notifications.filter((n) => !n.read).length}
                     </span>
@@ -391,7 +391,7 @@ function Notifications() {
 
             {/* Recent Activity */}
             <div>
-              <h3 className="font-semibold mb-4">Recent Activity</h3>
+              <h3 className="font-semibold mb-4">النشاط الأخير</h3>
               <div className="space-y-4">
                 {notifications.slice(0, 3).map((notification) => (
                   <div
@@ -414,7 +414,7 @@ function Notifications() {
 
                 {notifications.length === 0 && !loading && (
                   <div className="bg-gray-50 rounded-xl p-4 text-center">
-                    <p className="text-sm text-gray-500">No recent activity</p>
+                    <p className="text-sm text-gray-500">لا يوجد نشاط حديث</p>
                   </div>
                 )}
               </div>

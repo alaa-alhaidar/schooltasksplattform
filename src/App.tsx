@@ -576,7 +576,7 @@ function App() {
                 className="flex items-center space-x-2 px-4 py-2 bg-black text-white rounded-full"
               >
                 <Plus size={20} />
-                <span>Add Assignment</span>
+                <span>إضافة مهمة</span>
               </button>
             )}
             {user && (
@@ -585,7 +585,7 @@ function App() {
                 className="flex items-center space-x-2 px-4 py-2 bg-black text-white rounded-full"
               >
                 <Plus size={20} />
-                <span>Add Notification</span>
+                <span>إضافة إشعار</span>
               </button>
             )}
             <button className="p-2 rounded-full hover:bg-gray-100 relative">
@@ -800,12 +800,12 @@ function App() {
                     }
                     className="w-full px-3 py-2 border rounded-lg"
                   >
-                    <option value="Mathematics">Mathematics</option>
-                    <option value="German">German</option>
-                    <option value="English">English</option>
-                    <option value="Physic">Physic</option>
-                    <option value="Chemie">Chemie</option>
-                    <option value="Tests">Tests</option>
+                    <option value="Mathematics">الرياضيات</option>
+                    <option value="German">اللغة الألمانية</option>
+                    <option value="English">اللغة الإنجليزية</option>
+                    <option value="Physic">العلوم</option>
+                    <option value="Chemie">الكيمياء</option>
+                    <option value="Tests">الاختبارات</option>
                   </select>
                 </div>
                 <div>
@@ -921,7 +921,7 @@ function App() {
         {showAddNotificationForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-8 w-[500px]">
-              <h2 className="text-2xl font-bold mb-6">Add New Notification</h2>
+              <h2 className="text-2xl font-bold mb-6">إضافة إشعار جديد</h2>
               <form onSubmit={handleNotificationSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -972,7 +972,7 @@ function App() {
                     className="w-full px-3 py-2 border rounded-lg"
                     required
                   >
-                    <option value="">Select Class Level</option>
+                    <option value="">اختر الصف</option>
                     {[1, 2, 3, 4, 5, 6].map((level) => (
                       <option key={level} value={level}>
                         Class {level}
@@ -995,7 +995,7 @@ function App() {
                     className="w-full px-3 py-2 border rounded-lg"
                     required
                   >
-                    <option value="">Select Sub Class</option>
+                    <option value="">اختر الشعبة</option>
                     {['A', 'B', 'C'].map((level) => (
                       <option key={level} value={level}>
                         SUB Class {level}
@@ -1048,7 +1048,7 @@ function App() {
             }}
           >
             <Grid size={20} />
-            <span>All</span>
+            <span>الكل</span>
           </button>
           <div className="relative">
             <button
@@ -1097,7 +1097,7 @@ function App() {
             onClick={() => setSelectedCategory('Tests')}
           >
             <BookCheck size={20} />
-            <span>Tests</span>
+            <span>الاختبارات</span>
           </button>
           <button
             className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
@@ -1108,7 +1108,7 @@ function App() {
             onClick={() => setSelectedCategory('Mathematics')}
           >
             <Box size={20} />
-            <span>Mathematics</span>
+            <span>الرياضيات</span>
           </button>
           <button
             className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
@@ -1117,7 +1117,7 @@ function App() {
             onClick={() => setSelectedCategory('German')}
           >
             <Book size={20} />
-            <span>German</span>
+            <span>اللغة الألمانية</span>
           </button>
           <button
             className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
@@ -1128,7 +1128,7 @@ function App() {
             onClick={() => setSelectedCategory('English')}
           >
             <Languages size={20} />
-            <span>English</span>
+            <span>اللغة الإنجليزية</span>
           </button>
           <button
             className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
@@ -1137,7 +1137,7 @@ function App() {
             onClick={() => setSelectedCategory('Physic')}
           >
             <Atom size={20} />
-            <span>Physic</span>
+            <span>العلوم</span>
           </button>
           <button
             className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
@@ -1146,7 +1146,7 @@ function App() {
             onClick={() => setSelectedCategory('Chemie')}
           >
             <Beaker size={20} />
-            <span>Chemie</span>
+            <span>الكيمياء</span>
           </button>
         </div>
 
@@ -1302,7 +1302,7 @@ function App() {
                 className="px-6 py-3 bg-black text-white rounded-full inline-flex items-center space-x-2"
               >
                 <LogIn size={20} />
-                <span>Sign In</span>
+                <span>تسجيل الدخول</span>
               </button>
             </div>
           )}
@@ -1334,11 +1334,11 @@ function App() {
             {/* Activity Chart */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold">Activity</h3>
+                <h3 className="font-semibold">النشاط</h3>
                 <select className="text-sm bg-transparent">
-                  <option>Year</option>
-                  <option>Month</option>
-                  <option>Week</option>
+                  <option>السنة</option>
+                  <option>الشهر</option>
+                  <option>الأسبوع</option>
                 </select>
               </div>
               <div className="h-40 bg-gray-50 rounded-xl"></div>
@@ -1346,7 +1346,7 @@ function App() {
 
             {/* Recent Assignments */}
             <div>
-              <h3 className="font-semibold mb-4">Recent Assignments</h3>
+              <h3 className="font-semibold mb-4">أحدث المهام</h3>
               <div className="space-y-4">
                 {assignments.slice(0, 5).map((assignment) => (
                   <div

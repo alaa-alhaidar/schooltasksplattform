@@ -37,7 +37,7 @@ const Login = () => {
       if (isSignUp) {
         const { error } = await signUp(authForm.email, authForm.password, authForm.fullName);
         if (error) throw error;
-        alert('Account created! Please sign in.');
+        alert('تم إنشاء الحساب! يرجى تسجيل الدخول.');
         setIsSignUp(false);
       } else {
         const { error } = await signIn(authForm.email, authForm.password);
@@ -76,7 +76,7 @@ const Login = () => {
       setAuthError(
         error instanceof Error
           ? error.message
-          : 'An error occurred. Please try again.'
+          : 'حدث خطأ. يرجى المحاولة مرة أخرى.'
       );
     } finally {
       setLoading(false);
@@ -100,10 +100,10 @@ const Login = () => {
       {/* Form Container */}
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md relative z-10">
         <h1 className="text-3xl font-bold mb-8 text-center hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-600 hover:text-transparent hover:bg-clip-text">
-          {isSignUp ? 'Create Account' : 'my school tasks'}
+          {isSignUp ? 'إنشاء حساب' : 'مهامي المدرسية'}
         </h1>
         <h2 className="text-xl mb-6 text-center text-gray-600">
-          {isSignUp ? 'Join our teaching community' : 'Welcome back, teacher'}
+          {isSignUp ? 'انضم إلى مجتمع المدرسة' : 'مرحباً بعودتك'}
         </h2>
 
         {authError && (
@@ -116,7 +116,7 @@ const Login = () => {
           {isSignUp && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name
+                الاسم الكامل
               </label>
               <input
                 type="text"
@@ -126,14 +126,14 @@ const Login = () => {
                 }
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none"
                 required
-                placeholder="Enter your full name"
+                placeholder="أدخل اسمك الكامل"
               />
             </div>
           )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
+              البريد الإلكتروني
             </label>
             <input
               type="email"
@@ -143,13 +143,13 @@ const Login = () => {
               }
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none"
               required
-              placeholder="Enter your email"
+              placeholder="أدخل بريدك الإلكتروني"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
+              كلمة المرور
             </label>
             <input
               type="password"
@@ -159,7 +159,7 @@ const Login = () => {
               }
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:outline-none"
               required
-              placeholder="Enter your password"
+              placeholder="أدخل كلمة المرور"
             />
           </div>
 
@@ -190,7 +190,7 @@ const Login = () => {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Loading...
+                جارٍ التحميل...
               </span>
             ) : (
               <span className="flex items-center">
@@ -199,7 +199,7 @@ const Login = () => {
                 ) : (
                   <LogIn className="mr-2" size={20} />
                 )}
-                {isSignUp ? 'Sign Up' : 'Sign In'}
+                {isSignUp ? 'إنشاء حساب' : 'تسجيل الدخول'}
               </span>
             )}
           </button>
@@ -211,8 +211,8 @@ const Login = () => {
             className="text-sm text-gray-600 hover:text-black"
           >
             {isSignUp
-              ? 'Already have an account? Sign in'
-              : 'Need an account? Sign up'}
+              ? 'لديك حساب بالفعل؟ سجل الدخول'
+              : 'ليس لديك حساب؟ أنشئ حساباً'}
           </button>
         </div>
       </div>

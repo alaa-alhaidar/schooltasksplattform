@@ -56,7 +56,7 @@ export default function AppLayout() {
           error: userError,
         } = await supabase.auth.getUser();
         if (userError) throw userError;
-        if (!user) throw new Error('Keine aktive Anmeldung gefunden.');
+        if (!user) throw new Error('لم يتم العثور على جلسة تسجيل دخول نشطة.');
 
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -133,7 +133,7 @@ export default function AppLayout() {
         }
       } catch (error: unknown) {
         if (active) {
-          setLoadError(error instanceof Error ? error.message : 'Profil konnte nicht geladen werden.');
+          setLoadError(error instanceof Error ? error.message : 'تعذر تحميل الملف الشخصي.');
           setIdentity((current) => ({ ...current, loading: false }));
         }
       }
@@ -153,9 +153,9 @@ export default function AppLayout() {
 
   const navigation = useMemo(
     () => [
-      { path: homePath, label: 'Übersicht', icon: Home },
-      { path: '/Schedule', label: 'Stundenplan', icon: CalendarDays },
-      { path: notificationsPath, label: 'Mitteilungen', icon: Bell },
+      { path: homePath, label: 'الرئيسية', icon: Home },
+      { path: '/Schedule', label: 'الجدول الدراسي', icon: CalendarDays },
+      { path: notificationsPath, label: 'الإشعارات', icon: Bell },
     ],
     [homePath, notificationsPath]
   );
@@ -185,11 +185,11 @@ export default function AppLayout() {
   if (loadError) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#faf8f8] p-6">
-        <div className="max-w-md rounded-3xl bg-white p-8 text-center shadow-sm">
-          <h1 className="text-xl font-bold">Profil konnte nicht geladen werden</h1>
+        <div dir="rtl" className="max-w-md rounded-3xl bg-white p-8 text-center shadow-sm">
+          <h1 className="text-xl font-bold">تعذر تحميل الملف الشخصي</h1>
           <p className="mt-3 text-slate-500">{loadError}</p>
           <button onClick={handleSignOut} className="mt-6 rounded-xl bg-black px-5 py-3 text-white">
-            Zur Anmeldung
+            العودة إلى تسجيل الدخول
           </button>
         </div>
       </div>
@@ -199,11 +199,11 @@ export default function AppLayout() {
   return (
     <AppIdentityContext.Provider value={identity}>
       <div className="min-h-screen bg-[#faf8f8]">
-        <aside className="fixed inset-y-0 left-0 z-50 flex w-20 flex-col items-center border-r border-slate-100 bg-white py-8">
+        <aside className="fixed inset-y-0 right-0 z-50 flex w-20 flex-col items-center border-l border-slate-100 bg-white py-8">
           <button
             onClick={() => navigate(homePath)}
             className="mb-10 flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white"
-            title="Startseite"
+            title="الرئيسية"
           >
             <BookOpen size={24} />
           </button>
@@ -232,14 +232,14 @@ export default function AppLayout() {
           <button
             onClick={handleSignOut}
             className="rounded-2xl p-3 text-slate-400 hover:bg-red-50 hover:text-red-600"
-            title="Abmelden"
-            aria-label="Abmelden"
+            title="تسجيل الخروج"
+            aria-label="تسجيل الخروج"
           >
             <LogOut size={23} />
           </button>
         </aside>
 
-        <div className="app-shell-page ml-20 min-h-screen">
+        <div className="app-shell-page mr-20 min-h-screen">
           <Outlet />
         </div>
       </div>

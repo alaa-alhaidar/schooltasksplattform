@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { addDays, addWeeks, format, getISOWeek, startOfWeek } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { arSA } from 'date-fns/locale';
 import {
   Bell,
   BookOpen,
@@ -59,11 +59,11 @@ interface WeeklyPlanItem {
 }
 
 const weekdays = [
-  { value: 1, label: 'Montag' },
-  { value: 2, label: 'Dienstag' },
-  { value: 3, label: 'Mittwoch' },
-  { value: 4, label: 'Donnerstag' },
-  { value: 5, label: 'Freitag' },
+  { value: 1, label: 'الاثنين' },
+  { value: 2, label: 'الثلاثاء' },
+  { value: 3, label: 'الأربعاء' },
+  { value: 4, label: 'الخميس' },
+  { value: 5, label: 'الجمعة' },
 ];
 
 const subjectStyles: Record<string, string> = {
@@ -73,6 +73,15 @@ const subjectStyles: Record<string, string> = {
   Physic: 'border-violet-300 bg-violet-50 text-violet-900',
   Chemie: 'border-yellow-300 bg-yellow-50 text-yellow-900',
   Tests: 'border-red-300 bg-red-50 text-red-900',
+};
+
+const subjectLabels: Record<string, string> = {
+  Mathematics: 'الرياضيات',
+  German: 'اللغة الألمانية',
+  English: 'اللغة الإنجليزية',
+  Physic: 'العلوم',
+  Chemie: 'الكيمياء',
+  Tests: 'اختبار',
 };
 
 const getErrorMessage = (error: unknown, fallback: string) =>
@@ -108,7 +117,7 @@ function WeeklyPlanCard({
         </div>
         {item.subject && (
           <span className="shrink-0 rounded-full bg-white/70 px-2 py-1 text-xs font-medium">
-            {item.subject}
+            {subjectLabels[item.subject] || item.subject}
           </span>
         )}
       </div>
@@ -118,10 +127,10 @@ function WeeklyPlanCard({
       {item.due_at && (
         <div className="mt-3 flex items-center gap-1.5 text-xs font-medium opacity-70">
           <Clock3 size={14} />
-          Abgabe {format(new Date(item.due_at), 'dd.MM.yyyy, HH:mm', { locale: de })}
+          التسليم {format(new Date(item.due_at), 'dd.MM.yyyy، HH:mm', { locale: arSA })}
         </div>
       )}
-      <span className="mt-3 block text-xs font-semibold opacity-60">Details anzeigen</span>
+      <span className="mt-3 block text-xs font-semibold opacity-60">عرض التفاصيل</span>
     </button>
   );
 }
@@ -150,7 +159,7 @@ export default function Schools() {
         error: userError,
       } = await supabase.auth.getUser();
       if (userError) throw userError;
-      if (!user) throw new Error('Bitte melde dich erneut an.');
+      if (!user) throw new Error('يرجى تسجيل الدخول مرة أخرى.');
 
       const { data: profileRow, error: profileError } = await supabase
         .from('profiles')
@@ -193,7 +202,7 @@ export default function Schools() {
       setError(
         getErrorMessage(
           loadError,
-          'Profil und Klasse konnten nicht geladen werden.'
+          'تعذر تحميل الملف الشخصي والصف.'
         )
       );
     } finally {
@@ -230,7 +239,7 @@ export default function Schools() {
       setItems((planItems || []) as WeeklyPlanItem[]);
     } catch (loadError: unknown) {
       setError(
-        getErrorMessage(loadError, 'Der Wochenplan konnte nicht geladen werden.')
+        getErrorMessage(loadError, 'تعذر تحميل الخطة الأسبوعية.')
       );
     } finally {
       setLoadingPlan(false);
@@ -305,19 +314,19 @@ export default function Schools() {
           <BookOpen size={24} />
         </div>
         <nav className="flex flex-1 flex-col items-center gap-5">
-          <button className="rounded-2xl bg-slate-100 p-3" title="Wochenplan">
+          <button className="rounded-2xl bg-slate-100 p-3" title="الخطة الأسبوعية">
             <Home size={23} />
           </button>
           <button
             className="rounded-2xl p-3 text-slate-400 hover:bg-slate-100 hover:text-black"
-            title="Stundenplan"
+            title="الجدول الدراسي"
             onClick={() => navigate('/Schedule', { state: navigationState })}
           >
             <CalendarDays size={23} />
           </button>
           <button
             className="rounded-2xl p-3 text-slate-400 hover:bg-slate-100 hover:text-black"
-            title="Mitteilungen"
+            title="الإشعارات"
             onClick={() => navigate('/schools_notifications', { state: navigationState })}
           >
             <Bell size={23} />
@@ -326,7 +335,7 @@ export default function Schools() {
         <button
           onClick={handleSignOut}
           className="rounded-2xl p-3 text-slate-400 hover:bg-red-50 hover:text-red-600"
-          title="Abmelden"
+          title="تسجيل الخروج"
         >
           <LogOut size={23} />
         </button>
@@ -337,46 +346,46 @@ export default function Schools() {
           <div>
             <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-500">
               <School size={17} />
-              {schoolData?.school_full_name || 'Meine Schule'}
+              {schoolData?.school_full_name || 'مدرستي'}
               {classData && <><span>·</span><span>{classData.name}</span></>}
             </div>
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Wochenplan</h1>
+            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">الخطة الأسبوعية</h1>
             {profile && (
               <p className="mt-2 text-sm text-slate-500">
-                Angemeldet als {profile.full_name} ({profile.email})
+                مسجل باسم {profile.full_name} ({profile.email})
               </p>
             )}
           </div>
 
           <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-            <button onClick={() => setWeekStart((date) => addWeeks(date, -1))} className="rounded-xl p-2 hover:bg-slate-100" aria-label="Vorherige Woche">
-              <ChevronLeft size={21} />
+            <button onClick={() => setWeekStart((date) => addWeeks(date, -1))} className="rounded-xl p-2 hover:bg-slate-100" aria-label="الأسبوع السابق">
+              <ChevronRight size={21} />
             </button>
             <button onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))} className="min-w-48 rounded-xl px-3 py-2 text-center hover:bg-slate-50">
-              <div className="font-semibold">Kalenderwoche {getISOWeek(weekStart)}</div>
+              <div className="font-semibold">الأسبوع {getISOWeek(weekStart)}</div>
               <div className="text-xs text-slate-500">
-                {format(weekStart, 'dd. MMM', { locale: de })} – {format(addDays(weekStart, 6), 'dd. MMM yyyy', { locale: de })}
+                {format(weekStart, 'dd MMM', { locale: arSA })} – {format(addDays(weekStart, 6), 'dd MMM yyyy', { locale: arSA })}
               </div>
             </button>
-            <button onClick={() => setWeekStart((date) => addWeeks(date, 1))} className="rounded-xl p-2 hover:bg-slate-100" aria-label="Nächste Woche">
-              <ChevronRight size={21} />
+            <button onClick={() => setWeekStart((date) => addWeeks(date, 1))} className="rounded-xl p-2 hover:bg-slate-100" aria-label="الأسبوع التالي">
+              <ChevronLeft size={21} />
             </button>
           </div>
         </header>
 
         {error && (
           <div className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-5 text-red-800">
-            <p className="font-semibold">Der Wochenplan konnte nicht angezeigt werden.</p>
+            <p className="font-semibold">تعذر عرض الخطة الأسبوعية.</p>
             <p className="mt-1 text-sm">{error}</p>
-            <button onClick={loadIdentity} className="mt-4 rounded-xl bg-red-800 px-4 py-2 text-sm font-medium text-white">Erneut versuchen</button>
+            <button onClick={loadIdentity} className="mt-4 rounded-xl bg-red-800 px-4 py-2 text-sm font-medium text-white">إعادة المحاولة</button>
           </div>
         )}
 
         {!error && !classData && (
           <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
             <Map className="mx-auto mb-4 text-slate-400" size={40} />
-            <h2 className="text-xl font-semibold">Noch keiner Klasse zugeordnet</h2>
-            <p className="mx-auto mt-2 max-w-lg text-slate-500">Bitte lasse dein Konto von der Schule mit einer Klasse oder einem Kind verbinden.</p>
+            <h2 className="text-xl font-semibold">لم يتم ربط الحساب بصف بعد</h2>
+            <p className="mx-auto mt-2 max-w-lg text-slate-500">يرجى التواصل مع المدرسة لربط حسابك بصف أو بطفل.</p>
           </div>
         )}
 
@@ -387,8 +396,8 @@ export default function Schools() {
         {classData && !loadingPlan && !error && !plan && (
           <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
             <CalendarDays className="mx-auto mb-4 text-slate-400" size={40} />
-            <h2 className="text-xl font-semibold">Für KW {getISOWeek(weekStart)} ist noch kein Plan veröffentlicht</h2>
-            <p className="mt-2 text-slate-500">Wechsle zu einer anderen Woche oder schaue später erneut vorbei.</p>
+            <h2 className="text-xl font-semibold">لم تُنشر خطة للأسبوع {getISOWeek(weekStart)} بعد</h2>
+            <p className="mt-2 text-slate-500">انتقل إلى أسبوع آخر أو عد لاحقاً.</p>
           </div>
         )}
 
@@ -396,7 +405,7 @@ export default function Schools() {
           <div className="space-y-8">
             {announcements.length > 0 && (
               <section>
-                <div className="mb-4 flex items-center gap-2"><Megaphone size={20} /><h2 className="text-lg font-bold">Wichtige Mitteilungen</h2></div>
+                <div className="mb-4 flex items-center gap-2"><Megaphone size={20} /><h2 className="text-lg font-bold">إشعارات مهمة</h2></div>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {announcements.map((item) => <WeeklyPlanCard key={item.id} item={item} onClick={() => setSelectedItem(item)} />)}
                 </div>
@@ -405,8 +414,8 @@ export default function Schools() {
 
             <section>
               <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2"><CalendarDays size={20} /><h2 className="text-lg font-bold">Aufgaben nach Wochentag</h2></div>
-                <span className="text-sm text-slate-500">{items.filter((item) => item.item_type !== 'announcement').length} Einträge</span>
+                <div className="flex items-center gap-2"><CalendarDays size={20} /><h2 className="text-lg font-bold">المهام حسب أيام الأسبوع</h2></div>
+                <span className="text-sm text-slate-500">{items.filter((item) => item.item_type !== 'announcement').length} مهام</span>
               </div>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                 {itemsByDay.map((day) => (
@@ -417,14 +426,14 @@ export default function Schools() {
                     </div>
                     <div className="space-y-3">
                       {day.items.map((item) => <WeeklyPlanCard key={item.id} item={item} onClick={() => setSelectedItem(item)} />)}
-                      {day.items.length === 0 && <p className="px-1 py-8 text-center text-sm text-slate-400">Keine Einträge</p>}
+                      {day.items.length === 0 && <p className="px-1 py-8 text-center text-sm text-slate-400">لا توجد مهام</p>}
                     </div>
                   </div>
                 ))}
               </div>
               {otherItems.length > 0 && (
                 <div className="mt-4 rounded-3xl border border-slate-200 bg-white/60 p-4">
-                  <h3 className="mb-3 font-bold">Weitere Einträge</h3>
+                  <h3 className="mb-3 font-bold">مهام أخرى</h3>
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {otherItems.map((item) => (
                       <WeeklyPlanCard key={item.id} item={item} onClick={() => setSelectedItem(item)} />
@@ -454,7 +463,7 @@ export default function Schools() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  {selectedItem.item_type === 'assignment' ? 'Aufgabe' : selectedItem.item_type === 'announcement' ? 'Mitteilung' : selectedItem.item_type === 'event' ? 'Termin' : 'Stundenplan'}
+                  {selectedItem.item_type === 'assignment' ? 'مهمة' : selectedItem.item_type === 'announcement' ? 'إشعار' : selectedItem.item_type === 'event' ? 'موعد' : 'جدول دراسي'}
                 </span>
                 <h2 id="plan-item-title" className="mt-3 text-2xl font-bold">
                   {selectedItem.title}
@@ -464,7 +473,7 @@ export default function Schools() {
                 type="button"
                 onClick={() => setSelectedItem(null)}
                 className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-black"
-                aria-label="Details schließen"
+                aria-label="إغلاق التفاصيل"
               >
                 <X size={22} />
               </button>
@@ -473,31 +482,31 @@ export default function Schools() {
             <dl className="mt-6 space-y-4">
               {selectedItem.subject && (
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Fach</dt>
-                  <dd className="mt-1 font-medium">{selectedItem.subject}</dd>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">المادة</dt>
+                  <dd className="mt-1 font-medium">{subjectLabels[selectedItem.subject] || selectedItem.subject}</dd>
                 </div>
               )}
               {selectedItem.weekday && (
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Tag</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">اليوم</dt>
                   <dd className="mt-1 font-medium">
-                    {weekdays.find((day) => day.value === selectedItem.weekday)?.label || 'Wochenende'}
+                    {weekdays.find((day) => day.value === selectedItem.weekday)?.label || 'عطلة نهاية الأسبوع'}
                   </dd>
                 </div>
               )}
               {selectedItem.due_at && (
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Abgabe</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">موعد التسليم</dt>
                   <dd className="mt-1 flex items-center gap-2 font-medium">
                     <Clock3 size={17} />
-                    {format(new Date(selectedItem.due_at), 'EEEE, dd. MMMM yyyy · HH:mm', { locale: de })}
+                    {format(new Date(selectedItem.due_at), 'EEEE، dd MMMM yyyy · HH:mm', { locale: arSA })}
                   </dd>
                 </div>
               )}
               <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Beschreibung</dt>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">الوصف</dt>
                 <dd className="mt-2 whitespace-pre-wrap leading-7 text-slate-700">
-                  {selectedItem.description || 'Keine zusätzliche Beschreibung vorhanden.'}
+                  {selectedItem.description || 'لا يوجد وصف إضافي.'}
                 </dd>
               </div>
             </dl>
@@ -507,7 +516,7 @@ export default function Schools() {
               onClick={() => setSelectedItem(null)}
               className="mt-8 w-full rounded-xl bg-black px-5 py-3 font-semibold text-white hover:bg-slate-800"
             >
-              Schließen
+              إغلاق
             </button>
           </section>
         </div>
