@@ -23,20 +23,15 @@ export async function signUp(email: string, password: string, fullName: string) 
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      data: {
+        full_name: fullName,
+      },
+    },
   });
 
   if (authError) {
     return { error: authError };
-  }
-
-  if (authData.user) {
-    const { error: profileError } = await supabase
-      .from('teachers')
-      .insert([{ id: authData.user.id, email, full_name: fullName }]);
-
-    if (profileError) {
-      return { error: profileError };
-    }
   }
 
   return { data: authData, error: null };
