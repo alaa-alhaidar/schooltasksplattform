@@ -1056,7 +1056,7 @@ function App() {
             className={`relative flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition ${selectedCategory === 'Assignments' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
           >
             <Grid size={18} /> المهام
-            <span className="absolute -left-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-amber-400 px-1.5 text-xs font-bold text-black shadow-sm">
+            <span className="absolute -left-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-emerald-500 px-1.5 text-xs font-bold text-white shadow-sm">
               {taskCount}
             </span>
           </button>
