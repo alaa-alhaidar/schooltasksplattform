@@ -597,6 +597,24 @@ function App() {
           <div className="flex flex-wrap items-center gap-3">
             {user && (
               <button
+                onClick={() =>
+                  navigate('/Schedule', {
+                    state: {
+                      schoolName,
+                      email,
+                      classLevel: emailPrefix_class_level,
+                      subclass: emailPrefix_subclass,
+                    },
+                  })
+                }
+                className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-black hover:bg-gray-50"
+              >
+                <Calendar size={20} />
+                <span>تحديد الجدول الأسبوعي</span>
+              </button>
+            )}
+            {user && (
+              <button
                 onClick={() => setShowAddForm(true)}
                 className="flex items-center gap-2 rounded-xl bg-black px-5 py-3 text-white hover:bg-gray-800"
               >
