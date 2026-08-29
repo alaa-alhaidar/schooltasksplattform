@@ -91,7 +91,7 @@ function WeeklyPlanCard({
     ? 'border-amber-300 bg-amber-50 text-amber-950'
     : item.subject === 'Tests'
       ? 'border-red-300 bg-red-100 text-red-950'
-      : 'border-amber-300 bg-amber-100 text-amber-950';
+      : 'border-emerald-300 bg-emerald-100 text-emerald-950';
 
   return (
     <button
