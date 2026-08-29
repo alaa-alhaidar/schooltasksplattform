@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase, signIn, signUp, signOut } from './lib/supabase';
+import { getDateDayColor } from './lib/dayColors';
 import { Pencil, Trash2, Info } from 'lucide-react';
 import { useAppIdentity } from './layout/AppLayout';
 
@@ -1168,7 +1169,7 @@ function App() {
                 {filteredAssignments.map((assignment) => (
                   <div
                     key={assignment.id}
-                    className={`rounded-3xl p-6 hover:shadow-lg transition-shadow ${assignment.subject === 'Tests' ? 'bg-red-100' : 'bg-emerald-100'}`}
+                    className={`rounded-3xl border p-6 transition-shadow hover:shadow-lg ${getDateDayColor(assignment.deadline).border} ${getDateDayColor(assignment.deadline).card} ${assignment.subject === 'Tests' ? 'ring-2 ring-red-400' : ''}`}
                   >
                     <div className="flex items-center space-x-2 mb-4">
                       <span className="rounded-xl bg-white/80 p-2">

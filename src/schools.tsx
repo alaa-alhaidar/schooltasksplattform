@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { signOut, supabase } from './lib/supabase';
+import { getDayColor } from './lib/dayColors';
 
 interface Profile {
   id: string;
@@ -87,11 +88,10 @@ function WeeklyPlanCard({
   onClick: () => void;
 }) {
   const isAnnouncement = item.item_type === 'announcement';
+  const dayColor = getDayColor(item.weekday);
   const cardStyle = isAnnouncement
     ? 'border-amber-300 bg-amber-50 text-amber-950'
-    : item.subject === 'Tests'
-      ? 'border-red-300 bg-red-100 text-red-950'
-      : 'border-emerald-300 bg-emerald-100 text-emerald-950';
+    : `${dayColor.border} ${dayColor.card} ${item.subject === 'Tests' ? 'ring-2 ring-red-400' : ''}`;
 
   return (
     <button
@@ -412,10 +412,10 @@ export default function Schools() {
               </div>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                 {itemsByDay.map((day) => (
-                  <div key={day.value} className="min-h-52 rounded-3xl border border-slate-200 bg-white/60 p-3">
+                  <div key={day.value} className={`min-h-52 rounded-3xl border p-3 ${getDayColor(day.value).border} ${getDayColor(day.value).soft}`}>
                     <div className="mb-3 flex items-center justify-between px-1">
                       <h3 className="font-bold">{day.label}</h3>
-                      <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-500">{day.items.length}</span>
+                      <span className={`rounded-full px-2 py-1 text-xs ${getDayColor(day.value).badge}`}>{day.items.length}</span>
                     </div>
                     <div className="space-y-3">
                       {day.items.map((item) => <WeeklyPlanCard key={item.id} item={item} onClick={() => setSelectedItem(item)} />)}

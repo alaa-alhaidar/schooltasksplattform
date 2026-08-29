@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase, signOut } from './lib/supabase';
+import { getEnglishDayColor } from './lib/dayColors';
 import { useAppIdentity } from './layout/AppLayout';
 
 interface ScheduleItem {
@@ -591,7 +592,7 @@ function WeeklySchedule() {
                 {daysOfWeek.map((day) => (
                   <div
                     key={day}
-                    className="p-4 font-semibold text-center border-r last:border-r-0"
+                    className={`border-r p-4 text-center font-semibold last:border-r-0 ${getEnglishDayColor(day).soft}`}
                   >
                     {dayLabels[day] || day}
                   </div>
@@ -614,7 +615,7 @@ function WeeklySchedule() {
                     return (
                       <div
                         key={`${day}-${timeSlot}`}
-                        className="min-h-32 border-r p-3 last:border-r-0"
+                        className={`min-h-32 border-r p-3 last:border-r-0 ${getEnglishDayColor(day).soft}`}
                       >
                         {canEditSchedule ? (
                           <label className="block h-full">
@@ -629,8 +630,8 @@ function WeeklySchedule() {
                               }
                               className={`h-full min-h-24 w-full cursor-pointer rounded-lg border px-3 py-3 text-center font-semibold outline-none transition disabled:cursor-wait disabled:opacity-60 focus:border-black focus:ring-2 focus:ring-black/10 ${
                                 item
-                                  ? 'border-green-300 bg-green-100 text-gray-900'
-                                  : 'border-dashed border-gray-300 bg-gray-50 text-gray-500'
+                                  ? `${getEnglishDayColor(day).border} ${getEnglishDayColor(day).card}`
+                                  : 'border-dashed border-gray-300 bg-white/70 text-gray-500'
                               }`}
                             >
                               <option value="">حصة فارغة</option>
@@ -643,7 +644,7 @@ function WeeklySchedule() {
                           </label>
                         ) : item ? (
                           <div
-                            className={`rounded-lg p-3 ${item.color} border-l-4 h-full`}
+                            className={`h-full rounded-lg border p-3 ${getEnglishDayColor(day).border} ${getEnglishDayColor(day).card}`}
                           >
                             <h3 className="font-semibold">{scheduleLabels[item.subject] || item.subject}</h3>
                             {(item.teacher || item.room) && (
@@ -712,7 +713,7 @@ function WeeklySchedule() {
                   .map((item) => (
                     <div
                       key={item.id}
-                      className={`rounded-lg p-4 ${item.color} border-l-4`}
+                      className={`rounded-lg border p-4 ${getEnglishDayColor(item.day).border} ${getEnglishDayColor(item.day).card}`}
                     >
                       <div className="flex justify-between items-start">
                         <h4 className="font-semibold">{scheduleLabels[item.subject] || item.subject}</h4>
