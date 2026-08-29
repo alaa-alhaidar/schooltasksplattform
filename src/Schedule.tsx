@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Bell,
-  Settings,
   Home,
   Calendar,
   Book,
@@ -376,30 +375,29 @@ function WeeklySchedule() {
 
       {/* Main Content */}
       <main className="flex-1 p-8">
-        <header className="flex justify-between items-center mb-12">
-          <h1 className="text-3xl font-bold">
-            <Calendar className="inline-block mr-2" />
-            الجدول الأسبوعي - {schoolTownData?.school_full_name || schoolName}
-            <span className="ml-4 text-lg text-gray-600">
-              الصف: {classLevel || ''}
-              {subclass?.toUpperCase() || ''}
-            </span>
-          </h1>
-          <div className="flex items-center space-x-4">
-            <button className="p-2 rounded-full hover:bg-gray-100">
-              <Settings size={24} />
-            </button>
+        <header className="mb-10 border-b border-gray-200 pb-8">
+          <div className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-500">
+            <Calendar size={18} />
+            <span>الجدول الدراسي</span>
           </div>
+          <h1 className="text-3xl font-bold md:text-4xl">
+            {schoolTownData?.school_full_name || schoolName}
+          </h1>
+          {(classLevel || subclass) && (
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-700">
+              {classLevel && <span>الصف {classLevel}</span>}
+              {classLevel && subclass && <span className="text-gray-300">·</span>}
+              {subclass && <span>الشعبة {subclass.toUpperCase()}</span>}
+            </div>
+          )}
         </header>
 
         {/* Weekly Schedule Grid */}
         <section>
-          <h2 className="text-xl font-semibold mb-6">
-            الجدول الدراسي{' '}
-            <span className="text-sm font-normal text-gray-500">
-              (جميع الأوقات بنظام 24 ساعة)
-            </span>
-          </h2>
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-xl font-semibold">الحصص الأسبوعية</h2>
+            <span className="text-sm font-normal text-gray-500">جميع الأوقات بنظام 24 ساعة</span>
+          </div>
 
           {loading ? (
             <div className="flex justify-center items-center h-64">
