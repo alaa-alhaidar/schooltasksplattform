@@ -76,6 +76,7 @@ const subjectStyles: Record<string, string> = {
 };
 
 const subjectLabels: Record<string, string> = {
+  Assignments: 'مهمة',
   Mathematics: 'الرياضيات',
   German: 'اللغة الألمانية',
   English: 'اللغة الإنجليزية',

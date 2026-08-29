@@ -61,9 +61,11 @@ function App() {
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(
     null
   );
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('Assignments');
   const [selectedClass, setSelectedClass] = useState<number | null>(null); // State for selected class level
   const [showClassDropdown, setShowClassDropdown] = useState(false);
+  const [selectedSubclass, setSelectedSubclass] = useState<string | null>(null);
+  const [showSubclassDropdown, setShowSubclassDropdown] = useState(false);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showAuthForm, setShowAuthForm] = useState(false);
@@ -93,7 +95,7 @@ function App() {
   // This is cleaner but still has the same timing issue
   const [newAssignment, setNewAssignment] = useState(() => ({
     title: '',
-    subject: 'Mathematics',
+    subject: 'Assignments',
     class_level: 1,
     subclass: 'A',
     deadline: format(new Date(), 'yyyy-MM-dd'),
@@ -122,23 +124,6 @@ function App() {
       }));
     }
   }, [schoolTownData?.id]);
-
-  const subjectColors: { [key: string]: string } = {
-    Mathematics: 'bg-blue-100',
-    German: 'bg-orange-100',
-    English: 'bg-green-100',
-    Physic: 'bg-purple-100',
-    Chemie: 'bg-yellow-100',
-    Tests: 'bg-red-200',
-  };
-  const subjectLabels: Record<string, string> = {
-    Mathematics: 'الرياضيات',
-    German: 'اللغة الألمانية',
-    English: 'اللغة الإنجليزية',
-    Physic: 'العلوم',
-    Chemie: 'الكيمياء',
-    Tests: 'الاختبارات',
-  };
 
   useEffect(() => {
     // Check current auth status
@@ -380,7 +365,7 @@ function App() {
       setEditingAssignment(null);
       setNewAssignment({
         title: '',
-        subject: 'Mathematics',
+        subject: 'Assignments',
         class_level: 1,
         subclass: 'A',
         deadline: format(new Date(), 'yyyy-MM-dd'),
@@ -445,14 +430,20 @@ function App() {
   const filteredAssignments = assignments.filter((assignment) => {
     // Filter by category
     const matchesCategory =
-      selectedCategory === 'All' || assignment.subject === selectedCategory;
+      selectedCategory === 'Tests'
+        ? assignment.subject === 'Tests'
+        : assignment.subject !== 'Tests';
 
     // Filter by class_level - ensure both are numbers for consistent comparison
     const matchesClass =
       selectedClass === null ||
       Number(assignment.class_level) === Number(selectedClass);
 
-    return matchesCategory && matchesClass;
+    const matchesSubclass =
+      selectedSubclass === null ||
+      assignment.subclass.toUpperCase() === selectedSubclass;
+
+    return matchesCategory && matchesClass && matchesSubclass;
   });
 
   // Clear class filter function
@@ -798,7 +789,7 @@ function App() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Subject
+                    النوع
                   </label>
                   <select
                     value={newAssignment.subject}
@@ -810,17 +801,13 @@ function App() {
                     }
                     className="w-full px-3 py-2 border rounded-lg"
                   >
-                    <option value="Mathematics">الرياضيات</option>
-                    <option value="German">اللغة الألمانية</option>
-                    <option value="English">اللغة الإنجليزية</option>
-                    <option value="Physic">العلوم</option>
-                    <option value="Chemie">الكيمياء</option>
-                    <option value="Tests">الاختبارات</option>
+                    <option value="Assignments">مهمة</option>
+                    <option value="Tests">اختبار</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Class Level
+                    الصف
                   </label>
                   <select
                     value={newAssignment.class_level}
@@ -832,16 +819,16 @@ function App() {
                     }
                     className="w-full px-3 py-2 border rounded-lg"
                   >
-                    {[1, 2, 3, 4, 5, 6].map((level) => (
+                    {Array.from({ length: 13 }, (_, index) => index + 1).map((level) => (
                       <option key={level} value={level}>
-                        Class {level}
+                        الصف {level}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Sub Class Level
+                    الشعبة
                   </label>
                   <select
                     value={newAssignment.subclass}
@@ -853,9 +840,9 @@ function App() {
                     }
                     className="w-full px-3 py-2 border rounded-lg"
                   >
-                    {['A', 'B', 'C'].map((level) => (
+                    {['A', 'B', 'C', 'D'].map((level) => (
                       <option key={level} value={level}>
-                        SUB Class {level}
+                        الشعبة {level}
                       </option>
                     ))}
                   </select>
@@ -902,7 +889,7 @@ function App() {
                       setNewAssignment((prev) => ({
                         ...prev,
                         title: '',
-                        subject: 'Mathematics',
+                        subject: 'Assignments',
                         class_level: 1,
                         subclass: '',
                         deadline: format(new Date(), 'yyyy-MM-dd'),
@@ -1050,10 +1037,17 @@ function App() {
         <div className="mb-10 flex flex-wrap items-center gap-3">
           <button
             type="button"
-            onClick={() => { setSelectedCategory('All'); setSelectedClass(null); }}
-            className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition ${selectedCategory === 'All' && selectedClass === null ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
+            onClick={() => setSelectedCategory('Assignments')}
+            className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition ${selectedCategory === 'Assignments' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
           >
-            <Grid size={18} /> الكل
+            <Grid size={18} /> المهام
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedCategory('Tests')}
+            className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition ${selectedCategory === 'Tests' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
+          >
+            <BookCheck size={18} /> الاختبارات
           </button>
 
           <div className="relative">
@@ -1074,7 +1068,7 @@ function App() {
                 >
                   كل الصفوف
                 </button>
-                {[1, 2, 3, 4, 5, 6].map((level) => (
+                {Array.from({ length: 13 }, (_, index) => index + 1).map((level) => (
                   <button
                     key={level}
                     type="button"
@@ -1088,29 +1082,43 @@ function App() {
             )}
           </div>
 
-          {([
-            ['Tests', 'الاختبارات', BookCheck],
-            ['Mathematics', 'الرياضيات', Box],
-            ['German', 'اللغة الألمانية', Book],
-            ['English', 'اللغة الإنجليزية', Languages],
-            ['Physic', 'العلوم', Atom],
-            ['Chemie', 'الكيمياء', Beaker],
-          ] as Array<[string, string, typeof BookCheck]>).map(([value, label, Icon]) => (
+          <div className="relative">
             <button
-              key={value}
               type="button"
-              onClick={() => setSelectedCategory(value)}
-              className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition ${selectedCategory === value ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
+              onClick={() => setShowSubclassDropdown((visible) => !visible)}
+              className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition ${selectedSubclass !== null ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
             >
-              <Icon size={18} /> {label}
+              {selectedSubclass ? `الشعبة ${selectedSubclass}` : 'كل الشعب'}
+              <ChevronDown size={18} />
             </button>
-          ))}
+            {showSubclassDropdown && (
+              <div className="absolute right-0 z-20 mt-2 w-40 overflow-hidden rounded-2xl border border-gray-100 bg-white p-2 shadow-xl">
+                <button
+                  type="button"
+                  onClick={() => { setSelectedSubclass(null); setShowSubclassDropdown(false); }}
+                  className="w-full rounded-xl px-3 py-2 text-right text-sm hover:bg-gray-100"
+                >
+                  كل الشعب
+                </button>
+                {['A', 'B', 'C', 'D'].map((letter) => (
+                  <button
+                    key={letter}
+                    type="button"
+                    onClick={() => { setSelectedSubclass(letter); setShowSubclassDropdown(false); }}
+                    className="w-full rounded-xl px-3 py-2 text-right text-sm hover:bg-gray-100"
+                  >
+                    الشعبة {letter}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Assignments Grid */}
         <section>
           <h2 className="text-xl font-semibold mb-6">
-            المهام{' '}
+            {selectedCategory === 'Tests' ? 'الاختبارات' : 'المهام'}{' '}
             {filteredAssignments.length > 0
               ? `(${filteredAssignments.length})`
               : ''}
@@ -1121,33 +1129,14 @@ function App() {
                 {filteredAssignments.map((assignment) => (
                   <div
                     key={assignment.id}
-                    className={`rounded-3xl p-6 hover:shadow-lg transition-shadow ${
-                      subjectColors[assignment.subject] || 'bg-gray-100'
-                    }`}
+                    className={`rounded-3xl p-6 hover:shadow-lg transition-shadow ${assignment.subject === 'Tests' ? 'bg-red-100' : 'bg-blue-50'}`}
                   >
                     <div className="flex items-center space-x-2 mb-4">
-                      <span
-                        className={`p-2 rounded-xl ${
-                          subjectColors[assignment.subject]
-                        }`}
-                      >
-                        {assignment.subject === 'Mathematics' && (
-                          <Box size={20} />
-                        )}
-                        {assignment.subject === 'German' && <Book size={20} />}
-                        {assignment.subject === 'English' && (
-                          <Languages size={20} />
-                        )}
-                        {assignment.subject === 'Physic' && <Atom size={20} />}
-                        {assignment.subject === 'Chemie' && (
-                          <Beaker size={20} />
-                        )}
-                        {assignment.subject === 'Tests' && (
-                          <BookCheck size={20} />
-                        )}
+                      <span className="rounded-xl bg-white/80 p-2">
+                        {assignment.subject === 'Tests' ? <BookCheck size={20} /> : <Grid size={20} />}
                       </span>
                       <span className="rounded-full bg-white/80 px-3 py-1 text-sm">
-                        {subjectLabels[assignment.subject] || assignment.subject} · الصف {assignment.class_level}{assignment.subclass}
+                        {assignment.subject === 'Tests' ? 'اختبار' : 'مهمة'} · الصف {assignment.class_level} · الشعبة {assignment.subclass}
                       </span>
                     </div>
                     <h3 className="text-xl font-semibold mb-4">
