@@ -60,7 +60,7 @@ export default function AppLayout() {
 
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('id, email, full_name, role')
+          .select('id, email, full_name, role, school_id')
           .eq('id', user.id)
           .maybeSingle();
         if (profileError) throw profileError;
@@ -99,6 +99,15 @@ export default function AppLayout() {
             .from('schooltowns')
             .select('schoolname, school_full_name')
             .eq('id', classRow.school_id)
+            .single();
+          if (schoolError) throw schoolError;
+          schoolName = school.schoolname;
+          schoolFullName = school.school_full_name;
+        } else if (profile?.school_id) {
+          const { data: school, error: schoolError } = await supabase
+            .from('schooltowns')
+            .select('schoolname, school_full_name')
+            .eq('id', profile.school_id)
             .single();
           if (schoolError) throw schoolError;
           schoolName = school.schoolname;
@@ -166,6 +175,10 @@ export default function AppLayout() {
       navigate('/schools', { replace: true });
     } else if (!isFamilyView && location.pathname === '/schools') {
       navigate('/dashboard', { replace: true });
+    } else if (isFamilyView && location.pathname === '/notifications') {
+      navigate('/schools_notifications', { replace: true });
+    } else if (!isFamilyView && location.pathname === '/schools_notifications') {
+      navigate('/notifications', { replace: true });
     }
   }, [identity.loading, isFamilyView, location.pathname, navigate]);
 
