@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   User,
   Bell,
-  Settings,
   Home,
   Calendar,
   Book,
@@ -16,8 +15,6 @@ import {
   UserPlus,
   Atom,
   Beaker,
-  ChevronDown,
-  Map,
   Languages,
   School,
   Square,
@@ -25,7 +22,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase, signIn, signUp, signOut } from './lib/supabase';
-import { Pencil, Trash2, X, Info } from 'lucide-react';
+import { Pencil, Trash2, Info } from 'lucide-react';
 import { useAppIdentity } from './layout/AppLayout';
 
 interface Teacher {
@@ -65,7 +62,6 @@ function App() {
   );
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedClass, setSelectedClass] = useState<number | null>(null); // State for selected class level
-  const [showClassDropdown, setShowClassDropdown] = useState(false); // State to toggle dropdown
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showAuthForm, setShowAuthForm] = useState(false);
@@ -132,6 +128,14 @@ function App() {
     Physic: 'bg-purple-100',
     Chemie: 'bg-yellow-100',
     Tests: 'bg-red-200',
+  };
+  const subjectLabels: Record<string, string> = {
+    Mathematics: 'الرياضيات',
+    German: 'اللغة الألمانية',
+    English: 'اللغة الإنجليزية',
+    Physic: 'العلوم',
+    Chemie: 'الكيمياء',
+    Tests: 'الاختبارات',
   };
 
   useEffect(() => {
@@ -450,9 +454,6 @@ function App() {
   });
 
   // Clear class filter function
-  const clearClassFilter = () => {
-    setSelectedClass(null);
-  };
   // Add these state variables to your component
   const [showAddNotificationForm, setShowAddNotificationForm] = useState(false);
   const [newNotification, setNewNotification] = useState({
@@ -579,17 +580,17 @@ function App() {
 
       {/* Main Content */}
       <main className="flex-1 p-8">
-        <header className="flex justify-between items-center mb-12">
-          <h1 className="text-3xl font-bold">
-            {''}
-            <Map /> School: {schoolTownData?.school_full_name}. User Email:{' '}
-            {email}
-          </h1>
-          <div className="flex items-center space-x-4">
+        <header className="mb-10 flex flex-col gap-5 border-b border-gray-200 pb-8 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="mb-2 text-sm font-medium text-gray-500">إدارة المدرسة</p>
+            <h1 className="text-3xl font-bold">{schoolTownData?.school_full_name || 'مدرستي'}</h1>
+            <p className="mt-2 text-sm text-gray-500">لوحة المهام والإشعارات</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
             {user && (
               <button
                 onClick={() => setShowAddForm(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-black text-white rounded-full"
+                className="flex items-center gap-2 rounded-xl bg-black px-5 py-3 text-white hover:bg-gray-800"
               >
                 <Plus size={20} />
                 <span>إضافة مهمة</span>
@@ -598,21 +599,12 @@ function App() {
             {user && (
               <button
                 onClick={() => setShowAddNotificationForm(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-black text-white rounded-full"
+                className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-black hover:bg-gray-50"
               >
                 <Plus size={20} />
                 <span>إضافة إشعار</span>
               </button>
             )}
-            <button className="p-2 rounded-full hover:bg-gray-100 relative">
-              <Bell size={24} />
-              {'Test' === 'Test' && (
-                <span className="absolute -top-1 -right-1 bg-red-500 rounded-full w-3 h-3"></span>
-              )}
-            </button>
-            <button className="p-2 rounded-full hover:bg-gray-100">
-              <Settings size={24} />
-            </button>
           </div>
         </header>
 
@@ -1052,144 +1044,57 @@ function App() {
             </div>
           </div>
         )}
-        {/* Categories */}
-        <div className="flex space-x-4 mb-12">
-          <button
-            className={`px-4 py-2 rounded-full flex items-center space-x-2 ${
-              selectedCategory === 'All' ? 'bg-black text-white' : 'bg-white'
-            }`}
-            onClick={() => {
-              setSelectedCategory('All');
-              setSelectedClass(null); // Reset class filter
-            }}
-          >
-            <Grid size={20} />
-            <span>الكل</span>
-          </button>
-          <div className="relative">
-            <button
-              className={`px-4 py-2 rounded-full flex items-center space-x-2 ${
-                selectedClass !== null ? 'bg-black text-white' : 'bg-white'
-              }`}
-              onClick={() => setShowClassDropdown(!showClassDropdown)}
+        {/* Simple filters */}
+        <div className="mb-8 flex flex-wrap items-end gap-4 rounded-2xl border border-gray-200 bg-white p-4">
+          <label className="min-w-48 text-sm font-medium text-gray-600">
+            الصف
+            <select
+              value={selectedClass ?? ''}
+              onChange={(event) => setSelectedClass(event.target.value ? Number(event.target.value) : null)}
+              className="mt-2 block w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-black outline-none focus:border-black"
             >
-              <span>
-                {selectedClass !== null ? `Class ${selectedClass}` : 'Class'}
-              </span>
-              <ChevronDown size={20} />
+              <option value="">كل الصفوف</option>
+              {[1, 2, 3, 4, 5, 6].map((level) => <option key={level} value={level}>الصف {level}</option>)}
+            </select>
+          </label>
+          <label className="min-w-56 text-sm font-medium text-gray-600">
+            المادة
+            <select
+              value={selectedCategory}
+              onChange={(event) => setSelectedCategory(event.target.value)}
+              className="mt-2 block w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-black outline-none focus:border-black"
+            >
+              <option value="All">كل المواد</option>
+              <option value="Tests">الاختبارات</option>
+              <option value="Mathematics">الرياضيات</option>
+              <option value="German">اللغة الألمانية</option>
+              <option value="English">اللغة الإنجليزية</option>
+              <option value="Physic">العلوم</option>
+              <option value="Chemie">الكيمياء</option>
+            </select>
+          </label>
+          {(selectedClass !== null || selectedCategory !== 'All') && (
+            <button
+              type="button"
+              onClick={() => { setSelectedClass(null); setSelectedCategory('All'); }}
+              className="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100"
+            >
+              مسح التصفية
             </button>
-            {showClassDropdown && (
-              <div className="absolute mt-2 w-48 bg-white rounded-lg shadow-lg z-10">
-                {/* Option to show all classes */}
-                <button
-                  onClick={() => {
-                    setSelectedClass(null);
-                    setShowClassDropdown(false);
-                  }}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100"
-                >
-                  All Classes
-                </button>
-                {/* Individual class options */}
-                {[1, 2, 3, 4, 5, 6].map((level) => (
-                  <button
-                    key={level}
-                    onClick={() => {
-                      setSelectedClass(level);
-                      setShowClassDropdown(false);
-                    }}
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100"
-                  >
-                    Class {level}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <button
-            className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === 'Tests' ? 'bg-black text-white' : 'bg-white'
-            }`}
-            onClick={() => setSelectedCategory('Tests')}
-          >
-            <BookCheck size={20} />
-            <span>الاختبارات</span>
-          </button>
-          <button
-            className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === 'Mathematics'
-                ? 'bg-black text-white'
-                : 'bg-white'
-            }`}
-            onClick={() => setSelectedCategory('Mathematics')}
-          >
-            <Box size={20} />
-            <span>الرياضيات</span>
-          </button>
-          <button
-            className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === 'German' ? 'bg-black text-white' : 'bg-white'
-            }`}
-            onClick={() => setSelectedCategory('German')}
-          >
-            <Book size={20} />
-            <span>اللغة الألمانية</span>
-          </button>
-          <button
-            className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === 'English'
-                ? 'bg-black text-white'
-                : 'bg-white'
-            }`}
-            onClick={() => setSelectedCategory('English')}
-          >
-            <Languages size={20} />
-            <span>اللغة الإنجليزية</span>
-          </button>
-          <button
-            className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === 'Physic' ? 'bg-black text-white' : 'bg-white'
-            }`}
-            onClick={() => setSelectedCategory('Physic')}
-          >
-            <Atom size={20} />
-            <span>العلوم</span>
-          </button>
-          <button
-            className={`px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-red-100 ${
-              selectedCategory === 'Chemie' ? 'bg-black text-white' : 'bg-white'
-            }`}
-            onClick={() => setSelectedCategory('Chemie')}
-          >
-            <Beaker size={20} />
-            <span>الكيمياء</span>
-          </button>
+          )}
         </div>
-
-        {/* Active filters indicator */}
-        {selectedClass !== null && (
-          <div className="mb-4 px-4 py-2 bg-gray-100 rounded-lg inline-flex items-center">
-            <span>Filtering: Class {selectedClass}</span>
-            <button
-              onClick={clearClassFilter}
-              className="ml-2 text-gray-600 hover:text-gray-900"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        )}
 
         {/* Assignments Grid */}
         <section>
           <h2 className="text-xl font-semibold mb-6">
-            Assignments{' '}
+            المهام{' '}
             {filteredAssignments.length > 0
               ? `(${filteredAssignments.length})`
               : ''}
           </h2>
           {user ? (
             filteredAssignments.length > 0 ? (
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                 {filteredAssignments.map((assignment) => (
                   <div
                     key={assignment.id}
@@ -1218,14 +1123,8 @@ function App() {
                           <BookCheck size={20} />
                         )}
                       </span>
-                      <span className="ml-auto bg-white px-3 py-1 rounded-full text-sm">
-                        {assignment.subject}
-                      </span>
-                      <span className="ml-auto bg-white px-3 py-1 rounded-full text-sm">
-                        Class {assignment.class_level}
-                      </span>
-                      <span className="ml-auto bg-white px-3 py-1 rounded-full text-sm">
-                        {assignment.subclass}
+                      <span className="rounded-full bg-white/80 px-3 py-1 text-sm">
+                        {subjectLabels[assignment.subject] || assignment.subject} · الصف {assignment.class_level}{assignment.subclass}
                       </span>
                     </div>
                     <h3 className="text-xl font-semibold mb-4">
@@ -1233,10 +1132,10 @@ function App() {
                     </h3>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">
-                        Due:{' '}
+                        التسليم:{' '}
                         {format(new Date(assignment.deadline), 'MMM dd, yyyy')}
                         <span className="flex text-sm text-gray-600">
-                          <User size={16} className="flex mr-1" />:{' '}
+                          <User size={16} className="flex mr-1" /> المعلم:{' '}
                           {assignment?.teacher_full_name}
                         </span>
                       </span>
