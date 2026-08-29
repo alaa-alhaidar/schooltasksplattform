@@ -230,6 +230,8 @@ function WeeklySchedule() {
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string | null>(classId);
+  const [showClassDropdown, setShowClassDropdown] = useState(false);
+  const [showSubclassDropdown, setShowSubclassDropdown] = useState(false);
   const [savingCell, setSavingCell] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(
@@ -579,37 +581,61 @@ function WeeklySchedule() {
           </h1>
           {canEditSchedule && classes.length > 0 ? (
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <label className="inline-flex min-h-14 cursor-pointer items-center gap-3 rounded-full bg-black px-6 py-3 text-base font-bold text-white shadow-sm transition hover:bg-gray-800">
-                <span className="whitespace-nowrap">الصف</span>
-                <select
-                  value={selectedClass?.class_level || ''}
-                  onChange={(event) => selectClassLevel(Number(event.target.value))}
-                  className="min-w-16 cursor-pointer appearance-none bg-transparent text-center text-lg font-black text-white outline-none"
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowClassDropdown((visible) => !visible)}
+                  className="flex items-center gap-2 rounded-full bg-black px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
                 >
-                  {classLevels.map((level) => (
-                    <option key={level} value={level} className="bg-white text-black">
-                      {level}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={20} className="pointer-events-none shrink-0" />
-              </label>
+                  {selectedClass ? `الصف ${selectedClass.class_level}` : 'اختر الصف'}
+                  <ChevronDown size={18} />
+                </button>
+                {showClassDropdown && (
+                  <div className="absolute right-0 z-20 mt-2 w-40 overflow-hidden rounded-2xl border border-gray-100 bg-white p-2 shadow-xl">
+                    {classLevels.map((level) => (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => {
+                          selectClassLevel(level);
+                          setShowClassDropdown(false);
+                        }}
+                        className="w-full rounded-xl px-3 py-2 text-right text-sm hover:bg-gray-100"
+                      >
+                        الصف {level}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-              <label className="inline-flex min-h-14 cursor-pointer items-center gap-3 rounded-full bg-black px-6 py-3 text-base font-bold text-white shadow-sm transition hover:bg-gray-800">
-                <span className="whitespace-nowrap">الشعبة</span>
-                <select
-                  value={selectedClass?.subclass || ''}
-                  onChange={(event) => selectSubclass(event.target.value)}
-                  className="min-w-16 cursor-pointer appearance-none bg-transparent text-center text-lg font-black text-white outline-none"
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowSubclassDropdown((visible) => !visible)}
+                  className="flex items-center gap-2 rounded-full bg-black px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
                 >
-                  {availableSubclasses.map((classItem) => (
-                    <option key={classItem.id} value={classItem.subclass} className="bg-white text-black">
-                      {classItem.subclass.toUpperCase()}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={20} className="pointer-events-none shrink-0" />
-              </label>
+                  {selectedClass ? `الشعبة ${selectedClass.subclass.toUpperCase()}` : 'اختر الشعبة'}
+                  <ChevronDown size={18} />
+                </button>
+                {showSubclassDropdown && (
+                  <div className="absolute right-0 z-20 mt-2 w-40 overflow-hidden rounded-2xl border border-gray-100 bg-white p-2 shadow-xl">
+                    {availableSubclasses.map((classItem) => (
+                      <button
+                        key={classItem.id}
+                        type="button"
+                        onClick={() => {
+                          selectSubclass(classItem.subclass);
+                          setShowSubclassDropdown(false);
+                        }}
+                        className="w-full rounded-xl px-3 py-2 text-right text-sm hover:bg-gray-100"
+                      >
+                        الشعبة {classItem.subclass.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ) : (classLevel || subclass) && (
             <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-700">
