@@ -66,15 +66,6 @@ const weekdays = [
   { value: 5, label: 'الجمعة' },
 ];
 
-const subjectStyles: Record<string, string> = {
-  Mathematics: 'border-blue-300 bg-blue-50 text-blue-900',
-  German: 'border-orange-300 bg-orange-50 text-orange-900',
-  English: 'border-emerald-300 bg-emerald-50 text-emerald-900',
-  Physic: 'border-violet-300 bg-violet-50 text-violet-900',
-  Chemie: 'border-yellow-300 bg-yellow-50 text-yellow-900',
-  Tests: 'border-red-300 bg-red-50 text-red-900',
-};
-
 const subjectLabels: Record<string, string> = {
   Assignments: 'مهمة',
   Mathematics: 'الرياضيات',
@@ -98,8 +89,9 @@ function WeeklyPlanCard({
   const isAnnouncement = item.item_type === 'announcement';
   const cardStyle = isAnnouncement
     ? 'border-amber-300 bg-amber-50 text-amber-950'
-    : subjectStyles[item.subject || ''] ||
-      'border-slate-200 bg-white text-slate-900';
+    : item.subject === 'Tests'
+      ? 'border-red-300 bg-red-100 text-red-950'
+      : 'border-amber-300 bg-amber-100 text-amber-950';
 
   return (
     <button

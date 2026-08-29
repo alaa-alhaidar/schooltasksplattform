@@ -1129,7 +1129,7 @@ function App() {
                 {filteredAssignments.map((assignment) => (
                   <div
                     key={assignment.id}
-                    className={`rounded-3xl p-6 hover:shadow-lg transition-shadow ${assignment.subject === 'Tests' ? 'bg-red-100' : 'bg-blue-50'}`}
+                    className={`rounded-3xl p-6 hover:shadow-lg transition-shadow ${assignment.subject === 'Tests' ? 'bg-red-100' : 'bg-amber-100'}`}
                   >
                     <div className="flex items-center space-x-2 mb-4">
                       <span className="rounded-xl bg-white/80 p-2">
