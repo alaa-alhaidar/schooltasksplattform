@@ -392,15 +392,17 @@ function WeeklySchedule() {
       const { error: deleteError } = deleteQuery ? await deleteQuery : { error: null };
 
       if (deleteError) {
+        console.error('Error deleting schedule entry:', deleteError);
         setSchedule(previousSchedule);
-        setSaveError('تعذر حفظ التغيير. يرجى المحاولة مرة أخرى.');
+        setSaveError(`تعذر حفظ التغيير: ${deleteError.message}`);
       }
       setSavingCell(null);
       return;
     }
 
+    const entryId = existingItem?.id || crypto.randomUUID();
     const optimisticItem: ScheduleItem = {
-      id: existingItem?.id || cellKey,
+      id: entryId,
       day,
       start_time: startTime,
       end_time: endTime,
@@ -414,35 +416,28 @@ function WeeklySchedule() {
       optimisticItem,
     ]);
 
-    const { data, error: saveScheduleError } = await supabase
-      .from('class_schedule_entries')
-      .upsert(
-        {
+    const scheduleValues = {
+      end_time: endTime,
+      subject,
+      updated_at: new Date().toISOString(),
+    };
+    const { error: saveScheduleError } = existingItem
+      ? await supabase
+          .from('class_schedule_entries')
+          .update(scheduleValues)
+          .eq('id', existingItem.id)
+      : await supabase.from('class_schedule_entries').insert({
+          id: entryId,
           class_id: selectedClassId,
           day,
           start_time: startTime,
-          end_time: endTime,
-          subject,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'class_id,day,start_time' }
-      )
-      .select('id, day, start_time, end_time, subject, teacher, room')
-      .single();
+          ...scheduleValues,
+        });
 
     if (saveScheduleError) {
+      console.error('Error saving schedule entry:', saveScheduleError);
       setSchedule(previousSchedule);
-      setSaveError('تعذر حفظ التغيير. يرجى المحاولة مرة أخرى.');
-    } else if (data) {
-      setSchedule((current) => [
-        ...current.filter((item) => !(item.day === day && item.start_time === startTime)),
-        {
-          ...data,
-          start_time: normalizeDatabaseTime(data.start_time),
-          end_time: normalizeDatabaseTime(data.end_time),
-          color: 'bg-green-100 border-green-400',
-        },
-      ]);
+      setSaveError(`تعذر حفظ التغيير: ${saveScheduleError.message}`);
     }
     setSavingCell(null);
   };
