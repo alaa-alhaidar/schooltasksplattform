@@ -31,6 +31,12 @@ interface SchoolTownData {
   school_full_name: string;
 }
 
+interface ClassOption {
+  id: string;
+  class_level: number;
+  subclass: string;
+}
+
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const timeSlots = ['8:00 - 10:00', '10:00 - 12:00', '12:00 - 14:00'];
 const dayLabels: Record<string, string> = {
@@ -57,7 +63,7 @@ const scheduleOptions = [
 ];
 
 // Sample data - in production this would come from the database
-const sampleSchedule: ScheduleItem[] = [
+export const sampleSchedule: ScheduleItem[] = [
   {
     id: '1',
     day: 'Monday',
@@ -210,12 +216,20 @@ const sampleSchedule: ScheduleItem[] = [
   },
 ];
 
+const normalizeDatabaseTime = (value: string) => {
+  const [hours, minutes] = value.split(':');
+  return `${Number(hours)}:${minutes}`;
+};
+
 function WeeklySchedule() {
   const navigate = useNavigate();
-  const { schoolName, schoolFullName, schoolId, email, classLevel, subclass, role } = useAppIdentity();
+  const { schoolName, schoolFullName, schoolId, classId, email, classLevel, subclass, role } = useAppIdentity();
 
-  const [schedule, setSchedule] = useState<ScheduleItem[]>(sampleSchedule);
-  const [scheduleLoaded, setScheduleLoaded] = useState(false);
+  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
+  const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(classId);
+  const [savingCell, setSavingCell] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(
     null
   );
@@ -243,28 +257,63 @@ function WeeklySchedule() {
     setupAuth();
   }, []);
 
-  const scheduleStorageKey = schoolId
-    ? `school-schedule:${schoolId}:${classLevel || 'all'}:${subclass || 'all'}`
-    : null;
-
   useEffect(() => {
-    if (!scheduleStorageKey) return;
+    if (!schoolId) return;
 
-    const savedSchedule = window.localStorage.getItem(scheduleStorageKey);
-    if (savedSchedule) {
-      try {
-        setSchedule(JSON.parse(savedSchedule) as ScheduleItem[]);
-      } catch {
-        setSchedule(sampleSchedule);
+    const loadClasses = async () => {
+      const { data, error: classesError } = await supabase
+        .from('classes')
+        .select('id, class_level, subclass')
+        .eq('school_id', schoolId)
+        .order('class_level', { ascending: true })
+        .order('subclass', { ascending: true });
+
+      if (classesError) {
+        setError('تعذر تحميل الصفوف الدراسية.');
+        return;
       }
-    }
-    setScheduleLoaded(true);
-  }, [scheduleStorageKey]);
+
+      const availableClasses = (data || []) as ClassOption[];
+      setClasses(availableClasses);
+      setSelectedClassId((current) => classId || current || availableClasses[0]?.id || null);
+    };
+
+    loadClasses();
+  }, [classId, schoolId]);
 
   useEffect(() => {
-    if (!scheduleStorageKey || !scheduleLoaded) return;
-    window.localStorage.setItem(scheduleStorageKey, JSON.stringify(schedule));
-  }, [schedule, scheduleLoaded, scheduleStorageKey]);
+    if (!selectedClassId) {
+      setSchedule([]);
+      return;
+    }
+
+    const loadSchedule = async () => {
+      setLoading(true);
+      const { data, error: scheduleError } = await supabase
+        .from('class_schedule_entries')
+        .select('id, day, start_time, end_time, subject, teacher, room')
+        .eq('class_id', selectedClassId)
+        .order('start_time', { ascending: true });
+
+      if (scheduleError) {
+        setError('تعذر تحميل الجدول الدراسي.');
+        setSchedule([]);
+      } else {
+        setSchedule(
+          (data || []).map((item) => ({
+            ...item,
+            start_time: normalizeDatabaseTime(item.start_time),
+            end_time: normalizeDatabaseTime(item.end_time),
+            color: 'bg-green-100 border-green-400',
+          }))
+        );
+        setError(null);
+      }
+      setLoading(false);
+    };
+
+    loadSchedule();
+  }, [selectedClassId]);
 
   // School data comes from the shared, persistent app identity.
   useEffect(() => {
@@ -281,13 +330,6 @@ function WeeklySchedule() {
     setError(null);
     setLoading(false);
   }, [schoolFullName, schoolId, schoolName]);
-
-  // In a real app, we would fetch the schedule from the database
-  useEffect(() => {
-    // This is a placeholder for the actual API call
-    // In production, you would fetch the schedule from Supabase
-    setLoading(false);
-  }, []);
 
   const handleSignOut = async () => {
     await signOut();
@@ -330,43 +372,83 @@ function WeeklySchedule() {
     );
   };
 
-  const updateScheduleItem = (day: string, timeSlot: string, subject: string) => {
+  const updateScheduleItem = async (day: string, timeSlot: string, subject: string) => {
+    if (!selectedClassId) return;
     const [startTime, endTime] = timeSlot.split(' - ');
+    const cellKey = `${day}-${startTime}`;
+    const previousSchedule = schedule;
+    const existingItem = schedule.find(
+      (item) => item.day === day && item.start_time === startTime
+    );
 
-    setSchedule((currentSchedule) => {
-      const existingItem = currentSchedule.find(
-        (item) => item.day === day && item.start_time === startTime
-      );
+    setSavingCell(cellKey);
+    setSaveError(null);
 
-      if (!subject) {
-        return currentSchedule.filter(
-          (item) => !(item.day === day && item.start_time === startTime)
-        );
+    if (!subject) {
+      setSchedule((current) => current.filter((item) => item.id !== existingItem?.id));
+      const deleteQuery = existingItem
+        ? supabase.from('class_schedule_entries').delete().eq('id', existingItem.id)
+        : null;
+      const { error: deleteError } = deleteQuery ? await deleteQuery : { error: null };
+
+      if (deleteError) {
+        setSchedule(previousSchedule);
+        setSaveError('تعذر حفظ التغيير. يرجى المحاولة مرة أخرى.');
       }
+      setSavingCell(null);
+      return;
+    }
 
-      if (existingItem) {
-        return currentSchedule.map((item) =>
-          item.id === existingItem.id ? { ...item, subject } : item
-        );
-      }
+    const optimisticItem: ScheduleItem = {
+      id: existingItem?.id || cellKey,
+      day,
+      start_time: startTime,
+      end_time: endTime,
+      subject,
+      teacher: existingItem?.teacher || '',
+      room: existingItem?.room || '',
+      color: 'bg-green-100 border-green-400',
+    };
+    setSchedule((current) => [
+      ...current.filter((item) => !(item.day === day && item.start_time === startTime)),
+      optimisticItem,
+    ]);
 
-      return [
-        ...currentSchedule,
+    const { data, error: saveScheduleError } = await supabase
+      .from('class_schedule_entries')
+      .upsert(
         {
-          id: `${day}-${startTime}`,
+          class_id: selectedClassId,
           day,
           start_time: startTime,
           end_time: endTime,
           subject,
-          teacher: '',
-          room: '',
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'class_id,day,start_time' }
+      )
+      .select('id, day, start_time, end_time, subject, teacher, room')
+      .single();
+
+    if (saveScheduleError) {
+      setSchedule(previousSchedule);
+      setSaveError('تعذر حفظ التغيير. يرجى المحاولة مرة أخرى.');
+    } else if (data) {
+      setSchedule((current) => [
+        ...current.filter((item) => !(item.day === day && item.start_time === startTime)),
+        {
+          ...data,
+          start_time: normalizeDatabaseTime(data.start_time),
+          end_time: normalizeDatabaseTime(data.end_time),
           color: 'bg-green-100 border-green-400',
         },
-      ];
-    });
+      ]);
+    }
+    setSavingCell(null);
   };
 
   const canEditSchedule = role === 'school_admin' || role === 'teacher';
+  const selectedClass = classes.find((classItem) => classItem.id === selectedClassId);
 
   if (!schoolName) {
     return (
@@ -455,7 +537,22 @@ function WeeklySchedule() {
           <h1 className="text-3xl font-bold md:text-4xl">
             {schoolTownData?.school_full_name || schoolName}
           </h1>
-          {(classLevel || subclass) && (
+          {canEditSchedule && classes.length > 0 ? (
+            <label className="mt-4 inline-flex items-center gap-3 rounded-xl bg-white px-4 py-3 text-sm font-medium text-gray-700">
+              <span>الصف والشعبة</span>
+              <select
+                value={selectedClassId || ''}
+                onChange={(event) => setSelectedClassId(event.target.value)}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 font-semibold outline-none focus:border-black"
+              >
+                {classes.map((classItem) => (
+                  <option key={classItem.id} value={classItem.id}>
+                    الصف {classItem.class_level} · الشعبة {classItem.subclass.toUpperCase()}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (classLevel || subclass) && (
             <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-700">
               {classLevel && <span>الصف {classLevel}</span>}
               {classLevel && subclass && <span className="text-gray-300">·</span>}
@@ -471,12 +568,19 @@ function WeeklySchedule() {
               <h2 className="text-xl font-semibold">الحصص الأسبوعية</h2>
               {canEditSchedule && (
                 <p className="mt-1 text-sm text-gray-500">
-                  اختر محتوى كل حصة من القائمة داخل الجدول.
+                  اختر محتوى كل حصة من القائمة داخل الجدول. يتم الحفظ تلقائياً
+                  {selectedClass && ` للصف ${selectedClass.class_level}، الشعبة ${selectedClass.subclass.toUpperCase()}`}.
                 </p>
               )}
             </div>
             <span className="text-sm font-normal text-gray-500">جميع الأوقات بنظام 24 ساعة</span>
           </div>
+
+          {saveError && (
+            <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+              {saveError}
+            </div>
+          )}
 
           {loading ? (
             <div className="flex justify-center items-center h-64">
@@ -524,10 +628,11 @@ function WeeklySchedule() {
                             </span>
                             <select
                               value={item?.subject || ''}
+                              disabled={savingCell === `${day}-${timeSlot.split(' - ')[0]}`}
                               onChange={(event) =>
                                 updateScheduleItem(day, timeSlot, event.target.value)
                               }
-                              className={`h-full min-h-24 w-full cursor-pointer rounded-lg border px-3 py-3 text-center font-semibold outline-none transition focus:border-black focus:ring-2 focus:ring-black/10 ${
+                              className={`h-full min-h-24 w-full cursor-pointer rounded-lg border px-3 py-3 text-center font-semibold outline-none transition disabled:cursor-wait disabled:opacity-60 focus:border-black focus:ring-2 focus:ring-black/10 ${
                                 item
                                   ? 'border-green-300 bg-green-100 text-gray-900'
                                   : 'border-dashed border-gray-300 bg-gray-50 text-gray-500'
