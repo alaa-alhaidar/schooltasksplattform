@@ -1,19 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Bell,
-  Settings,
   Home,
   Calendar,
   Book,
-  Grid,
   LogOut,
-  Map,
   MessageSquare,
   Clock,
   User,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { arSA } from 'date-fns/locale';
 import { supabase, signOut } from '../lib/supabase';
 import { useAppIdentity } from '../layout/AppLayout';
 
@@ -236,28 +234,29 @@ function Notifications() {
 
       {/* Main Content */}
       <main className="flex-1 p-8">
-        <header className="flex justify-between items-center mb-12">
-          <h1 className="text-3xl font-bold">
-            <Map className="inline-block mr-2" />
-            الإشعارات - {schoolTownData?.school_full_name || schoolName}
-            <span className="ml-4 text-lg text-gray-600">
-            البريد: {email} الصف {classLevel}
-              {subclass?.toUpperCase()}
-            </span>
-          </h1>
-          <div className="flex items-center space-x-4">
-            <button className="p-2 rounded-full hover:bg-gray-100">
-              <Settings size={24} />
-            </button>
+        <header className="mb-10 border-b border-gray-200 pb-8">
+          <div className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-500">
+            <Bell size={18} />
+            <span>الإشعارات</span>
           </div>
+          <h1 className="text-3xl font-bold md:text-4xl">
+            {schoolTownData?.school_full_name || schoolName}
+          </h1>
+          {(classLevel || subclass) && (
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-700">
+              {classLevel && <span>الصف {classLevel}</span>}
+              {classLevel && subclass && <span className="text-gray-300">·</span>}
+              {subclass && <span>الشعبة {subclass.toUpperCase()}</span>}
+            </div>
+          )}
         </header>
 
         {/* Notifications Grid */}
         <section>
-          <h2 className="text-xl font-semibold mb-6">
-            الرسائل{' '}
-            {notifications.length > 0 ? `(${notifications.length})` : ''}
-          </h2>
+          <div className="mb-6 flex items-center gap-3">
+            <h2 className="text-xl font-semibold">الرسائل</h2>
+            <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-black px-2 text-sm font-bold text-white">{notifications.length}</span>
+          </div>
 
           {loading ? (
             <div className="flex justify-center items-center h-64">
@@ -269,13 +268,13 @@ function Notifications() {
                 <div
                   key={notification.id}
                   className={`bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow ${
-                    !notification.read ? 'border-l-4 border-blue-500' : ''
+                    !notification.read ? 'border-r-4 border-blue-500' : ''
                   }`}
                   onClick={() =>
                     !notification.read && handleMarkAsRead(notification.id)
                   }
                 >
-                  <div className="flex items-start space-x-4">
+                  <div className="flex items-start gap-4">
                     <img
                       src={
                         notification.teacher_avatar_url ||
@@ -285,26 +284,17 @@ function Notifications() {
                       className="w-12 h-12 rounded-full"
                     />
                     <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-lg">
-                          {notification.title}
-                        </h3>
-                        <span className="text-sm text-gray-500">
-                          {format(
-                            new Date(notification.created_at),
-                            'MMM dd, yyyy HH:mm'
-                          )}
-                        </span>
-                      </div>
+                      <h3 className="font-semibold text-lg">{notification.title}</h3>
                       <p className="text-gray-600 mt-2">
                         {notification.message}
                       </p>
-                      <div className="flex items-center mt-4 text-sm text-gray-500">
-                        <User size={16} className="mr-1" />
+                      <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-gray-500">
+                        <User size={16} />
                         <span>{notification.teacher_full_name}</span>
-                        <Clock size={16} className="ml-4 mr-1" />
+                        <span className="text-gray-300">·</span>
+                        <Clock size={16} />
                         <span>
-                          {format(new Date(notification.created_at), 'HH:mm')}
+                          {format(new Date(notification.created_at), 'dd MMMM yyyy، HH:mm', { locale: arSA })}
                         </span>
                         {!notification.read && (
                           <span className="ml-auto text-blue-500 text-sm">
