@@ -1169,7 +1169,7 @@ function App() {
                 {filteredAssignments.map((assignment) => (
                   <div
                     key={assignment.id}
-                    className={`rounded-3xl border p-6 transition-shadow hover:shadow-lg ${getDateDayColor(assignment.deadline).border} ${getDateDayColor(assignment.deadline).card} ${assignment.subject === 'Tests' ? 'ring-2 ring-red-400' : ''}`}
+                    className={`rounded-3xl p-6 transition-shadow hover:shadow-lg ${getDateDayColor(assignment.deadline).card}`}
                   >
                     <div className="flex items-center space-x-2 mb-4">
                       <span className="rounded-xl bg-white/80 p-2">

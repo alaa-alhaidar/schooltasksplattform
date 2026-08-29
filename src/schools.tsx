@@ -90,14 +90,14 @@ function WeeklyPlanCard({
   const isAnnouncement = item.item_type === 'announcement';
   const dayColor = getDayColor(item.weekday);
   const cardStyle = isAnnouncement
-    ? 'border-amber-300 bg-amber-50 text-amber-950'
-    : `${dayColor.border} ${dayColor.card} ${item.subject === 'Tests' ? 'ring-2 ring-red-400' : ''}`;
+    ? 'bg-amber-50 text-amber-950'
+    : dayColor.card;
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-2xl border p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-black/30 ${cardStyle}`}
+      className={`w-full rounded-2xl p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-black/30 ${cardStyle}`}
     >
       <div className="mb-2 flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
