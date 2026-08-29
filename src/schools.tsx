@@ -412,8 +412,8 @@ export default function Schools() {
               </div>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                 {itemsByDay.map((day) => (
-                  <div key={day.value} className={`min-h-52 rounded-3xl border p-3 ${getDayColor(day.value).border} ${getDayColor(day.value).soft}`}>
-                    <div className="mb-3 flex items-center justify-between px-1">
+                  <div key={day.value} className="min-h-52 px-1">
+                    <div className={`mb-3 flex items-center justify-between rounded-2xl border px-3 py-2 ${getDayColor(day.value).border} ${getDayColor(day.value).soft}`}>
                       <h3 className="font-bold">{day.label}</h3>
                       <span className={`rounded-full px-2 py-1 text-xs ${getDayColor(day.value).badge}`}>{day.items.length}</span>
                     </div>
