@@ -8,6 +8,7 @@ import {
   LogOut,
   MessageSquare,
   Clock,
+  ChevronDown,
   User as UserIcon,
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
@@ -578,34 +579,36 @@ function WeeklySchedule() {
           </h1>
           {canEditSchedule && classes.length > 0 ? (
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <label className="inline-flex items-center gap-3 rounded-xl bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm">
-                <span>الصف</span>
+              <label className="inline-flex min-h-14 cursor-pointer items-center gap-3 rounded-full bg-black px-6 py-3 text-base font-bold text-white shadow-sm transition hover:bg-gray-800">
+                <span className="whitespace-nowrap">الصف</span>
                 <select
                   value={selectedClass?.class_level || ''}
                   onChange={(event) => selectClassLevel(Number(event.target.value))}
-                  className="min-w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-center font-bold outline-none focus:border-black"
+                  className="min-w-16 cursor-pointer appearance-none bg-transparent text-center text-lg font-black text-white outline-none"
                 >
                   {classLevels.map((level) => (
-                    <option key={level} value={level}>
+                    <option key={level} value={level} className="bg-white text-black">
                       {level}
                     </option>
                   ))}
                 </select>
+                <ChevronDown size={20} className="pointer-events-none shrink-0" />
               </label>
 
-              <label className="inline-flex items-center gap-3 rounded-xl bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm">
-                <span>الشعبة</span>
+              <label className="inline-flex min-h-14 cursor-pointer items-center gap-3 rounded-full bg-black px-6 py-3 text-base font-bold text-white shadow-sm transition hover:bg-gray-800">
+                <span className="whitespace-nowrap">الشعبة</span>
                 <select
                   value={selectedClass?.subclass || ''}
                   onChange={(event) => selectSubclass(event.target.value)}
-                  className="min-w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-center font-bold outline-none focus:border-black"
+                  className="min-w-16 cursor-pointer appearance-none bg-transparent text-center text-lg font-black text-white outline-none"
                 >
                   {availableSubclasses.map((classItem) => (
-                    <option key={classItem.id} value={classItem.subclass}>
+                    <option key={classItem.id} value={classItem.subclass} className="bg-white text-black">
                       {classItem.subclass.toUpperCase()}
                     </option>
                   ))}
                 </select>
+                <ChevronDown size={20} className="pointer-events-none shrink-0" />
               </label>
             </div>
           ) : (classLevel || subclass) && (
