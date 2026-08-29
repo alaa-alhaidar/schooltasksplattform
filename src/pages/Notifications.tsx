@@ -37,7 +37,7 @@ interface SchoolTownData {
 
 function Notifications() {
   const navigate = useNavigate();
-  const { schoolName, email, classLevel, subclass } = useAppIdentity();
+  const { schoolName, schoolFullName, schoolId, email, classLevel, subclass } = useAppIdentity();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(
@@ -68,41 +68,17 @@ function Notifications() {
     setupAuth();
   }, []);
 
-  // Fetch SchoolTown Data - only runs once when component mounts
+  // School data comes from the shared, persistent app identity.
   useEffect(() => {
-    const getSchoolData = async () => {
-      if (!schoolName) {
-        setError('No school name provided');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        console.log('Fetching school data for:', schoolName);
-        const { data, error } = await supabase
-          .from('schooltowns')
-          .select('*')
-          .ilike('schoolname', schoolName)
-          .single();
-
-        if (error) throw error;
-
-        console.log('School data received:', data);
-        setSchoolTownData(data);
-        setSchoolDataLoaded(true);
-        setError(null);
-      } catch (err: any) {
-        setError(err.message);
-        console.error('Error fetching school data:', err);
-      } finally {
-        // We don't set loading to false here, as we still need to fetch notifications
-      }
-    };
-
-    getSchoolData();
-    // Removed schoolName from dependencies to prevent loops
-    // This effect should only run once on component mount
-  }, []);
+    if (!schoolId || !schoolName) {
+      setError('لم يتم ربط الحساب بمدرسة.');
+      setLoading(false);
+      return;
+    }
+    setSchoolTownData({ id: schoolId, schoolname: schoolName, school_full_name: schoolFullName || schoolName });
+    setSchoolDataLoaded(true);
+    setError(null);
+  }, [schoolFullName, schoolId, schoolName]);
 
   // Fetch notifications only when schoolTownData is available
   useEffect(() => {

@@ -17,6 +17,7 @@ export interface AppIdentity {
   role: 'student' | 'parent' | 'teacher' | 'school_admin' | null;
   schoolName: string | null;
   schoolFullName: string | null;
+  schoolId: string | null;
   classId: string | null;
   classLevel: number | null;
   subclass: string | null;
@@ -30,6 +31,7 @@ const emptyIdentity: AppIdentity = {
   role: null,
   schoolName: null,
   schoolFullName: null,
+  schoolId: null,
   classId: null,
   classLevel: null,
   subclass: null,
@@ -73,6 +75,7 @@ export default function AppLayout() {
         let subclass: string | null = null;
         let schoolName: string | null = null;
         let schoolFullName: string | null = null;
+        let schoolId: string | null = null;
 
         const { data: membership, error: membershipError } = await supabase
           .from('class_memberships')
@@ -94,6 +97,7 @@ export default function AppLayout() {
           classId = classRow.id;
           classLevel = classRow.class_level;
           subclass = classRow.subclass;
+          schoolId = classRow.school_id;
 
           const { data: school, error: schoolError } = await supabase
             .from('schooltowns')
@@ -104,6 +108,7 @@ export default function AppLayout() {
           schoolName = school.schoolname;
           schoolFullName = school.school_full_name;
         } else if (profile?.school_id) {
+          schoolId = profile.school_id;
           const { data: school, error: schoolError } = await supabase
             .from('schooltowns')
             .select('schoolname, school_full_name')
@@ -133,6 +138,7 @@ export default function AppLayout() {
             role,
             schoolName,
             schoolFullName,
+            schoolId,
             classId,
             classLevel,
             subclass,

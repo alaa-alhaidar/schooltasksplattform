@@ -203,7 +203,7 @@ const sampleSchedule: ScheduleItem[] = [
 
 function WeeklySchedule() {
   const navigate = useNavigate();
-  const { schoolName, email, classLevel, subclass } = useAppIdentity();
+  const { schoolName, schoolFullName, schoolId, email, classLevel, subclass } = useAppIdentity();
 
   const [schedule, setSchedule] = useState<ScheduleItem[]>(sampleSchedule);
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(
@@ -233,38 +233,21 @@ function WeeklySchedule() {
     setupAuth();
   }, []);
 
-  // Fetch SchoolTown Data
+  // School data comes from the shared, persistent app identity.
   useEffect(() => {
-    const getSchoolData = async () => {
-      if (!schoolName) {
-        setError('No school name provided');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        console.log('Fetching school data for:', schoolName);
-        const { data, error } = await supabase
-          .from('schooltowns')
-          .select('*')
-          .ilike('schoolname', schoolName)
-          .single();
-
-        if (error) throw error;
-
-        console.log('School data received:', data);
-        setSchoolTownData(data);
-        setError(null);
-      } catch (err: any) {
-        setError(err.message);
-        console.error('Error fetching school data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getSchoolData();
-  }, []);
+    if (!schoolId || !schoolName) {
+      setError('لم يتم ربط الحساب بمدرسة.');
+      setLoading(false);
+      return;
+    }
+    setSchoolTownData({
+      id: schoolId,
+      schoolname: schoolName,
+      school_full_name: schoolFullName || schoolName,
+    });
+    setError(null);
+    setLoading(false);
+  }, [schoolFullName, schoolId, schoolName]);
 
   // In a real app, we would fetch the schedule from the database
   useEffect(() => {
