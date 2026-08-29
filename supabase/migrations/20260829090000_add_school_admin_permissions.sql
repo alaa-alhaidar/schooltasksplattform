@@ -12,7 +12,7 @@ create table if not exists public.admin_allowlist (
 alter table public.admin_allowlist enable row level security;
 
 insert into public.admin_allowlist (email, school_id)
-select 'konsens.admin.scholl@con', id
+select 'konsens.admin.scholl@com', id
 from public.schooltowns
 where schoolname = 'scholl'
 on conflict (email) do update set school_id = excluded.school_id;
