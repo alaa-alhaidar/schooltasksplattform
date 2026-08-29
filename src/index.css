@@ -11,7 +11,7 @@ html[dir='rtl'] body {
 }
 
 /* Protected pages share the navigation supplied by AppLayout. */
-.app-shell-page > div > aside:first-of-type {
+.app-shell-page > div > aside {
   display: none;
 }
 
