@@ -406,16 +406,14 @@ export default function Schools() {
             )}
 
             <section>
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-5 flex items-center">
                 <div className="flex items-center gap-2"><CalendarDays size={20} /><h2 className="text-lg font-bold">المهام حسب أيام الأسبوع</h2></div>
-                <span className="text-sm text-slate-500">{items.filter((item) => item.item_type !== 'announcement').length} مهام</span>
               </div>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                 {itemsByDay.map((day) => (
                   <div key={day.value} className="min-h-52 px-1">
-                    <div className={`mb-3 flex items-center justify-between rounded-2xl border px-3 py-2 ${getDayColor(day.value).border} ${getDayColor(day.value).soft}`}>
-                      <h3 className="font-bold">{day.label}</h3>
-                      <span className={`rounded-full px-2 py-1 text-xs ${getDayColor(day.value).badge}`}>{day.items.length}</span>
+                    <div className={`mb-4 rounded-2xl border px-4 py-3 text-center ${getDayColor(day.value).border} ${getDayColor(day.value).soft}`}>
+                      <h3 className="text-xl font-black tracking-wide">{day.label}</h3>
                     </div>
                     <div className="space-y-3">
                       {day.items.map((item) => <WeeklyPlanCard key={item.id} item={item} onClick={() => setSelectedItem(item)} />)}
