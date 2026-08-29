@@ -49,7 +49,7 @@ interface Assignment {
   teacher_id: string;
 }
 interface SchoolTownData {
-  id: String;
+  id: string;
   schoolname: string;
   address: string;
   website: string;
@@ -71,7 +71,7 @@ function App() {
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [teacherData, setTeacher] = useState(null);
+  const [teacherData, setTeacher] = useState<Teacher | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -175,21 +175,18 @@ function App() {
           .select('*')
           .eq('id', authData.user.id)
           .single();
-        setTeacher(teacherData);
-        console.log('Teacher Data:', teacherData);
-        console.log('Teacher Data:', teacherData.full_name);
-        console.log('Teacher Data:', teacherData.avatar_url);
         if (teacherError) throw teacherError;
+        if (!teacherData) throw new Error('Teacher profile not found');
 
         // Update state if component is still mounted
         if (isMounted) {
           setTeacher(teacherData);
           setError(null);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Error fetching teacher data:', err);
         if (isMounted) {
-          setError(err.message);
+          setError(err instanceof Error ? err.message : 'Unknown error');
           setTeacher(null);
         }
       } finally {
@@ -335,25 +332,40 @@ function App() {
     }
 
     try {
+      if (!schoolTownData?.id) {
+        throw new Error('لم يتم العثور على المدرسة المرتبطة بحساب المدير.');
+      }
+
+      const assignmentPayload = {
+        title: newAssignment.title.trim(),
+        subject: newAssignment.subject,
+        class_level: Number(newAssignment.class_level),
+        subclass: newAssignment.subclass.trim().toUpperCase(),
+        deadline: newAssignment.deadline,
+        note: newAssignment.note.trim(),
+        school: schoolTownData.id,
+        teacher_id: user.id,
+        teacher_full_name: teacherData?.full_name || 'مدير المدرسة',
+        teacher_url_avatar: teacherData?.avatar_url || '',
+      };
+
+      if (!assignmentPayload.title) {
+        throw new Error('يرجى إدخال عنوان المهمة.');
+      }
+
       if (editingAssignment) {
         // Update existing assignment
         const { error } = await supabase
           .from('assignments')
-          .update({
-            ...newAssignment,
-            teacher_id: user.id,
-          })
+          .update(assignmentPayload)
           .eq('id', editingAssignment.id);
 
         if (error) throw error;
       } else {
         // Create new assignment
-        const { error } = await supabase.from('assignments').insert([
-          {
-            ...newAssignment,
-            teacher_id: user.id,
-          },
-        ]);
+        const { error } = await supabase
+          .from('assignments')
+          .insert([assignmentPayload]);
 
         if (error) throw error;
       }
@@ -375,7 +387,11 @@ function App() {
       fetchAssignments();
     } catch (error: any) {
       console.error('Error saving assignment:', error);
-      alert('Failed to save assignment');
+      alert(
+        `تعذر حفظ المهمة: ${
+          error instanceof Error ? error.message : 'خطأ غير معروف'
+        }`
+      );
     }
   };
 
