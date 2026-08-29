@@ -288,8 +288,8 @@ function WeeklySchedule() {
       return;
     }
 
-    const loadSchedule = async () => {
-      setLoading(true);
+    const loadSchedule = async (showLoading = true) => {
+      if (showLoading) setLoading(true);
       const { data, error: scheduleError } = await supabase
         .from('class_schedule_entries')
         .select('id, day, start_time, end_time, subject, teacher, room')
@@ -310,10 +310,28 @@ function WeeklySchedule() {
         );
         setError(null);
       }
-      setLoading(false);
+      if (showLoading) setLoading(false);
     };
 
     loadSchedule();
+
+    const scheduleChannel = supabase
+      .channel(`class-schedule-${selectedClassId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'class_schedule_entries',
+          filter: `class_id=eq.${selectedClassId}`,
+        },
+        () => loadSchedule(false)
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(scheduleChannel);
+    };
   }, [selectedClassId]);
 
   // School data comes from the shared, persistent app identity.
