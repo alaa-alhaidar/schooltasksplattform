@@ -6,13 +6,11 @@ import {
   Calendar,
   Book,
   LogOut,
-  Map,
   MessageSquare,
   Clock,
-  User,
-  Grid,
+  User as UserIcon,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import type { User } from '@supabase/supabase-js';
 import { supabase, signOut } from './lib/supabase';
 import { useAppIdentity } from './layout/AppLayout';
 
@@ -45,6 +43,18 @@ const scheduleLabels: Record<string, string> = {
   Music: 'الموسيقى', 'Computer Science': 'الحاسوب',
   'Social Studies': 'الدراسات الاجتماعية', 'Club Activities': 'الأنشطة',
 };
+const scheduleOptions = [
+  'Mathematics',
+  'Science',
+  'History',
+  'Language Arts',
+  'Physical Education',
+  'Art',
+  'Music',
+  'Computer Science',
+  'Social Studies',
+  'Club Activities',
+];
 
 // Sample data - in production this would come from the database
 const sampleSchedule: ScheduleItem[] = [
@@ -202,13 +212,14 @@ const sampleSchedule: ScheduleItem[] = [
 
 function WeeklySchedule() {
   const navigate = useNavigate();
-  const { schoolName, schoolFullName, schoolId, email, classLevel, subclass } = useAppIdentity();
+  const { schoolName, schoolFullName, schoolId, email, classLevel, subclass, role } = useAppIdentity();
 
   const [schedule, setSchedule] = useState<ScheduleItem[]>(sampleSchedule);
+  const [scheduleLoaded, setScheduleLoaded] = useState(false);
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(
     null
   );
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -231,6 +242,29 @@ function WeeklySchedule() {
 
     setupAuth();
   }, []);
+
+  const scheduleStorageKey = schoolId
+    ? `school-schedule:${schoolId}:${classLevel || 'all'}:${subclass || 'all'}`
+    : null;
+
+  useEffect(() => {
+    if (!scheduleStorageKey) return;
+
+    const savedSchedule = window.localStorage.getItem(scheduleStorageKey);
+    if (savedSchedule) {
+      try {
+        setSchedule(JSON.parse(savedSchedule) as ScheduleItem[]);
+      } catch {
+        setSchedule(sampleSchedule);
+      }
+    }
+    setScheduleLoaded(true);
+  }, [scheduleStorageKey]);
+
+  useEffect(() => {
+    if (!scheduleStorageKey || !scheduleLoaded) return;
+    window.localStorage.setItem(scheduleStorageKey, JSON.stringify(schedule));
+  }, [schedule, scheduleLoaded, scheduleStorageKey]);
 
   // School data comes from the shared, persistent app identity.
   useEffect(() => {
@@ -295,6 +329,44 @@ function WeeklySchedule() {
       (item) => item.day === day && item.start_time === startTime
     );
   };
+
+  const updateScheduleItem = (day: string, timeSlot: string, subject: string) => {
+    const [startTime, endTime] = timeSlot.split(' - ');
+
+    setSchedule((currentSchedule) => {
+      const existingItem = currentSchedule.find(
+        (item) => item.day === day && item.start_time === startTime
+      );
+
+      if (!subject) {
+        return currentSchedule.filter(
+          (item) => !(item.day === day && item.start_time === startTime)
+        );
+      }
+
+      if (existingItem) {
+        return currentSchedule.map((item) =>
+          item.id === existingItem.id ? { ...item, subject } : item
+        );
+      }
+
+      return [
+        ...currentSchedule,
+        {
+          id: `${day}-${startTime}`,
+          day,
+          start_time: startTime,
+          end_time: endTime,
+          subject,
+          teacher: '',
+          room: '',
+          color: 'bg-green-100 border-green-400',
+        },
+      ];
+    });
+  };
+
+  const canEditSchedule = role === 'school_admin' || role === 'teacher';
 
   if (!schoolName) {
     return (
@@ -395,7 +467,14 @@ function WeeklySchedule() {
         {/* Weekly Schedule Grid */}
         <section>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-xl font-semibold">الحصص الأسبوعية</h2>
+            <div>
+              <h2 className="text-xl font-semibold">الحصص الأسبوعية</h2>
+              {canEditSchedule && (
+                <p className="mt-1 text-sm text-gray-500">
+                  اختر محتوى كل حصة من القائمة داخل الجدول.
+                </p>
+              )}
+            </div>
             <span className="text-sm font-normal text-gray-500">جميع الأوقات بنظام 24 ساعة</span>
           </div>
 
@@ -436,24 +515,54 @@ function WeeklySchedule() {
                     return (
                       <div
                         key={`${day}-${timeSlot}`}
-                        className="p-4 border-r last:border-r-0"
+                        className="min-h-32 border-r p-3 last:border-r-0"
                       >
-                        {item ? (
+                        {canEditSchedule ? (
+                          <label className="block h-full">
+                            <span className="sr-only">
+                              {dayLabels[day]}، {timeSlot}
+                            </span>
+                            <select
+                              value={item?.subject || ''}
+                              onChange={(event) =>
+                                updateScheduleItem(day, timeSlot, event.target.value)
+                              }
+                              className={`h-full min-h-24 w-full cursor-pointer rounded-lg border px-3 py-3 text-center font-semibold outline-none transition focus:border-black focus:ring-2 focus:ring-black/10 ${
+                                item
+                                  ? 'border-green-300 bg-green-100 text-gray-900'
+                                  : 'border-dashed border-gray-300 bg-gray-50 text-gray-500'
+                              }`}
+                            >
+                              <option value="">حصة فارغة</option>
+                              {scheduleOptions.map((subject) => (
+                                <option key={subject} value={subject}>
+                                  {scheduleLabels[subject] || subject}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ) : item ? (
                           <div
                             className={`rounded-lg p-3 ${item.color} border-l-4 h-full`}
                           >
                             <h3 className="font-semibold">{scheduleLabels[item.subject] || item.subject}</h3>
-                            <div className="mt-2 text-sm text-gray-600">
-                              <div className="flex items-center">
-                                <User size={14} className="mr-1" />
-                                {item.teacher}
+                            {(item.teacher || item.room) && (
+                              <div className="mt-2 text-sm text-gray-600">
+                                {item.teacher && (
+                                  <div className="flex items-center">
+                                    <UserIcon size={14} className="mr-1" />
+                                    {item.teacher}
+                                  </div>
+                                )}
+                                {item.room && (
+                                  <div className="mt-1">
+                                    <span className="inline-block rounded-md bg-white px-2 py-1 text-xs">
+                                      {item.room}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
-                              <div className="mt-1">
-                                <span className="inline-block bg-white px-2 py-1 rounded-md text-xs">
-                                  {item.room}
-                                </span>
-                              </div>
-                            </div>
+                            )}
                           </div>
                         ) : (
                           <div className="h-full flex items-center justify-center text-gray-400">
