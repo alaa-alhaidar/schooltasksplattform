@@ -463,6 +463,31 @@ function WeeklySchedule() {
 
   const canEditSchedule = role === 'school_admin' || role === 'teacher';
   const selectedClass = classes.find((classItem) => classItem.id === selectedClassId);
+  const classLevels = Array.from(
+    new Set(classes.map((classItem) => classItem.class_level))
+  );
+  const availableSubclasses = classes.filter(
+    (classItem) => classItem.class_level === selectedClass?.class_level
+  );
+
+  const selectClassLevel = (nextClassLevel: number) => {
+    const matchingClass =
+      classes.find(
+        (classItem) =>
+          classItem.class_level === nextClassLevel &&
+          classItem.subclass === selectedClass?.subclass
+      ) || classes.find((classItem) => classItem.class_level === nextClassLevel);
+    setSelectedClassId(matchingClass?.id || null);
+  };
+
+  const selectSubclass = (nextSubclass: string) => {
+    const matchingClass = classes.find(
+      (classItem) =>
+        classItem.class_level === selectedClass?.class_level &&
+        classItem.subclass === nextSubclass
+    );
+    setSelectedClassId(matchingClass?.id || null);
+  };
 
   if (!schoolName) {
     return (
@@ -552,20 +577,37 @@ function WeeklySchedule() {
             {schoolTownData?.school_full_name || schoolName}
           </h1>
           {canEditSchedule && classes.length > 0 ? (
-            <label className="mt-4 inline-flex items-center gap-3 rounded-xl bg-white px-4 py-3 text-sm font-medium text-gray-700">
-              <span>الصف والشعبة</span>
-              <select
-                value={selectedClassId || ''}
-                onChange={(event) => setSelectedClassId(event.target.value)}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 font-semibold outline-none focus:border-black"
-              >
-                {classes.map((classItem) => (
-                  <option key={classItem.id} value={classItem.id}>
-                    الصف {classItem.class_level} · الشعبة {classItem.subclass.toUpperCase()}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <label className="inline-flex items-center gap-3 rounded-xl bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm">
+                <span>الصف</span>
+                <select
+                  value={selectedClass?.class_level || ''}
+                  onChange={(event) => selectClassLevel(Number(event.target.value))}
+                  className="min-w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-center font-bold outline-none focus:border-black"
+                >
+                  {classLevels.map((level) => (
+                    <option key={level} value={level}>
+                      {level}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="inline-flex items-center gap-3 rounded-xl bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm">
+                <span>الشعبة</span>
+                <select
+                  value={selectedClass?.subclass || ''}
+                  onChange={(event) => selectSubclass(event.target.value)}
+                  className="min-w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-center font-bold outline-none focus:border-black"
+                >
+                  {availableSubclasses.map((classItem) => (
+                    <option key={classItem.id} value={classItem.subclass}>
+                      {classItem.subclass.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           ) : (classLevel || subclass) && (
             <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-700">
               {classLevel && <span>الصف {classLevel}</span>}
