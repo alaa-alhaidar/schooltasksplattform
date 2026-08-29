@@ -15,6 +15,7 @@ import {
   UserPlus,
   Atom,
   Beaker,
+  ChevronDown,
   Languages,
   School,
   Square,
@@ -62,6 +63,7 @@ function App() {
   );
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedClass, setSelectedClass] = useState<number | null>(null); // State for selected class level
+  const [showClassDropdown, setShowClassDropdown] = useState(false);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showAuthForm, setShowAuthForm] = useState(false);
@@ -1044,44 +1046,65 @@ function App() {
             </div>
           </div>
         )}
-        {/* Simple filters */}
-        <div className="mb-8 flex flex-wrap items-end gap-4 rounded-2xl border border-gray-200 bg-white p-4">
-          <label className="min-w-48 text-sm font-medium text-gray-600">
-            الصف
-            <select
-              value={selectedClass ?? ''}
-              onChange={(event) => setSelectedClass(event.target.value ? Number(event.target.value) : null)}
-              className="mt-2 block w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-black outline-none focus:border-black"
-            >
-              <option value="">كل الصفوف</option>
-              {[1, 2, 3, 4, 5, 6].map((level) => <option key={level} value={level}>الصف {level}</option>)}
-            </select>
-          </label>
-          <label className="min-w-56 text-sm font-medium text-gray-600">
-            المادة
-            <select
-              value={selectedCategory}
-              onChange={(event) => setSelectedCategory(event.target.value)}
-              className="mt-2 block w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-black outline-none focus:border-black"
-            >
-              <option value="All">كل المواد</option>
-              <option value="Tests">الاختبارات</option>
-              <option value="Mathematics">الرياضيات</option>
-              <option value="German">اللغة الألمانية</option>
-              <option value="English">اللغة الإنجليزية</option>
-              <option value="Physic">العلوم</option>
-              <option value="Chemie">الكيمياء</option>
-            </select>
-          </label>
-          {(selectedClass !== null || selectedCategory !== 'All') && (
+        {/* Compact filter buttons */}
+        <div className="mb-10 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => { setSelectedCategory('All'); setSelectedClass(null); }}
+            className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition ${selectedCategory === 'All' && selectedClass === null ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
+          >
+            <Grid size={18} /> الكل
+          </button>
+
+          <div className="relative">
             <button
               type="button"
-              onClick={() => { setSelectedClass(null); setSelectedCategory('All'); }}
-              className="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100"
+              onClick={() => setShowClassDropdown((visible) => !visible)}
+              className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition ${selectedClass !== null ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
             >
-              مسح التصفية
+              {selectedClass !== null ? `الصف ${selectedClass}` : 'كل الصفوف'}
+              <ChevronDown size={18} />
             </button>
-          )}
+            {showClassDropdown && (
+              <div className="absolute right-0 z-20 mt-2 w-40 overflow-hidden rounded-2xl border border-gray-100 bg-white p-2 shadow-xl">
+                <button
+                  type="button"
+                  onClick={() => { setSelectedClass(null); setShowClassDropdown(false); }}
+                  className="w-full rounded-xl px-3 py-2 text-right text-sm hover:bg-gray-100"
+                >
+                  كل الصفوف
+                </button>
+                {[1, 2, 3, 4, 5, 6].map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => { setSelectedClass(level); setShowClassDropdown(false); }}
+                    className="w-full rounded-xl px-3 py-2 text-right text-sm hover:bg-gray-100"
+                  >
+                    الصف {level}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {([
+            ['Tests', 'الاختبارات', BookCheck],
+            ['Mathematics', 'الرياضيات', Box],
+            ['German', 'اللغة الألمانية', Book],
+            ['English', 'اللغة الإنجليزية', Languages],
+            ['Physic', 'العلوم', Atom],
+            ['Chemie', 'الكيمياء', Beaker],
+          ] as Array<[string, string, typeof BookCheck]>).map(([value, label, Icon]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setSelectedCategory(value)}
+              className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition ${selectedCategory === value ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
+            >
+              <Icon size={18} /> {label}
+            </button>
+          ))}
         </div>
 
         {/* Assignments Grid */}
