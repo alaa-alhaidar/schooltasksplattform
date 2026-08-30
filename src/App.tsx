@@ -56,16 +56,20 @@ interface SchoolTownData {
 }
 function App() {
   const navigate = useNavigate();
-  const { schoolName, classLevel, subclass, email } = useAppIdentity();
+  const { schoolName, classLevel, subclass, email, role } = useAppIdentity();
   const emailPrefix_class_level = classLevel;
   const emailPrefix_subclass = subclass;
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(
     null
   );
   const [selectedCategory, setSelectedCategory] = useState('Assignments');
-  const [selectedClass, setSelectedClass] = useState<number | null>(null); // State for selected class level
+  const [selectedClass, setSelectedClass] = useState<number | null>(
+    role === 'teacher' ? classLevel : null
+  ); // State for selected class level
   const [showClassDropdown, setShowClassDropdown] = useState(false);
-  const [selectedSubclass, setSelectedSubclass] = useState<string | null>(null);
+  const [selectedSubclass, setSelectedSubclass] = useState<string | null>(
+    role === 'teacher' ? subclass?.toUpperCase() || null : null
+  );
   const [showSubclassDropdown, setShowSubclassDropdown] = useState(false);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -97,8 +101,8 @@ function App() {
   const [newAssignment, setNewAssignment] = useState(() => ({
     title: '',
     subject: 'Assignments',
-    class_level: 1,
-    subclass: 'A',
+    class_level: role === 'teacher' && classLevel ? classLevel : 1,
+    subclass: role === 'teacher' && subclass ? subclass.toUpperCase() : 'A',
     deadline: format(new Date(), 'yyyy-MM-dd'),
     note: '',
     school: schoolTownData?.id,
@@ -106,6 +110,17 @@ function App() {
     teacher_full_name: 'Teacher', // Still default value initially
     teacher_url_avatar: 'blank', // Still default value initially
   }));
+
+  useEffect(() => {
+    if (role !== 'teacher' || !classLevel || !subclass) return;
+    setSelectedClass(classLevel);
+    setSelectedSubclass(subclass.toUpperCase());
+    setNewAssignment((current) => ({
+      ...current,
+      class_level: classLevel,
+      subclass: subclass.toUpperCase(),
+    }));
+  }, [classLevel, role, subclass]);
 
   // Still need the useEffect to update once data is available
   useEffect(() => {
@@ -367,8 +382,8 @@ function App() {
       setNewAssignment({
         title: '',
         subject: 'Assignments',
-        class_level: 1,
-        subclass: 'A',
+        class_level: role === 'teacher' && classLevel ? classLevel : 1,
+        subclass: role === 'teacher' && subclass ? subclass.toUpperCase() : 'A',
         deadline: format(new Date(), 'yyyy-MM-dd'),
         note: '',
         school: schoolTownData?.id,
@@ -461,6 +476,14 @@ function App() {
     (assignment) =>
       assignment.subject === 'Tests' && matchesSelectedClass(assignment)
   ).length;
+  const availableClassLevels =
+    role === 'teacher' && classLevel
+      ? [classLevel]
+      : Array.from({ length: 13 }, (_, index) => index + 1);
+  const availableSubclasses =
+    role === 'teacher' && subclass
+      ? [subclass.toUpperCase()]
+      : ['A', 'B', 'C', 'D'];
 
   // Clear class filter function
   // Add these state variables to your component
@@ -468,8 +491,8 @@ function App() {
   const [newNotification, setNewNotification] = useState({
     title: '',
     message: '',
-    class_level: '',
-    subclass: '',
+    class_level: role === 'teacher' && classLevel ? String(classLevel) : '',
+    subclass: role === 'teacher' && subclass ? subclass.toUpperCase() : '',
     teacher_id: user?.id,
     school_id: user?.school_id,
     teacher_full_name: '',
@@ -504,8 +527,8 @@ function App() {
       setNewNotification({
         title: '',
         message: '',
-        class_level: '',
-        subclass: '',
+        class_level: role === 'teacher' && classLevel ? String(classLevel) : '',
+        subclass: role === 'teacher' && subclass ? subclass.toUpperCase() : '',
         teacher_id: user?.id,
         school_id: schoolTownData?.id,
         teacher_full_name: '',
@@ -853,7 +876,7 @@ function App() {
                     }
                     className="w-full px-3 py-2 border rounded-lg"
                   >
-                    {Array.from({ length: 13 }, (_, index) => index + 1).map((level) => (
+                    {availableClassLevels.map((level) => (
                       <option key={level} value={level}>
                         الصف {level}
                       </option>
@@ -874,7 +897,7 @@ function App() {
                     }
                     className="w-full px-3 py-2 border rounded-lg"
                   >
-                    {['A', 'B', 'C', 'D'].map((level) => (
+                    {availableSubclasses.map((level) => (
                       <option key={level} value={level}>
                         الشعبة {level}
                       </option>
@@ -924,8 +947,8 @@ function App() {
                         ...prev,
                         title: '',
                         subject: 'Assignments',
-                        class_level: 1,
-                        subclass: '',
+                        class_level: role === 'teacher' && classLevel ? classLevel : 1,
+                        subclass: role === 'teacher' && subclass ? subclass.toUpperCase() : 'A',
                         deadline: format(new Date(), 'yyyy-MM-dd'),
                         note: '',
                         teacher_id: user?.id,
@@ -1004,7 +1027,7 @@ function App() {
                     required
                   >
                     <option value="">اختر الصف</option>
-                    {[1, 2, 3, 4, 5, 6].map((level) => (
+                    {availableClassLevels.map((level) => (
                       <option key={level} value={level}>
                         Class {level}
                       </option>
@@ -1027,7 +1050,7 @@ function App() {
                     required
                   >
                     <option value="">اختر الشعبة</option>
-                    {['A', 'B', 'C'].map((level) => (
+                    {availableSubclasses.map((level) => (
                       <option key={level} value={level}>
                         SUB Class {level}
                       </option>
@@ -1043,8 +1066,8 @@ function App() {
                       setNewNotification({
                         title: '',
                         message: '',
-                        class_level: '',
-                        subclass: '',
+                        class_level: role === 'teacher' && classLevel ? String(classLevel) : '',
+                        subclass: role === 'teacher' && subclass ? subclass.toUpperCase() : '',
                         teacher_id: user?.id,
                         school_id: user?.school_id,
                         teacher_full_name: '',
@@ -1101,14 +1124,16 @@ function App() {
             </button>
             {showClassDropdown && (
               <div className="absolute right-0 z-20 mt-2 w-40 overflow-hidden rounded-2xl border border-gray-100 bg-white p-2 shadow-xl">
-                <button
-                  type="button"
-                  onClick={() => { setSelectedClass(null); setShowClassDropdown(false); }}
-                  className="w-full rounded-xl px-3 py-2 text-right text-sm hover:bg-gray-100"
-                >
-                  كل الصفوف
-                </button>
-                {Array.from({ length: 13 }, (_, index) => index + 1).map((level) => (
+                {role !== 'teacher' && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedClass(null); setShowClassDropdown(false); }}
+                    className="w-full rounded-xl px-3 py-2 text-right text-sm hover:bg-gray-100"
+                  >
+                    كل الصفوف
+                  </button>
+                )}
+                {availableClassLevels.map((level) => (
                   <button
                     key={level}
                     type="button"
@@ -1133,14 +1158,16 @@ function App() {
             </button>
             {showSubclassDropdown && (
               <div className="absolute right-0 z-20 mt-2 w-40 overflow-hidden rounded-2xl border border-gray-100 bg-white p-2 shadow-xl">
-                <button
-                  type="button"
-                  onClick={() => { setSelectedSubclass(null); setShowSubclassDropdown(false); }}
-                  className="w-full rounded-xl px-3 py-2 text-right text-sm hover:bg-gray-100"
-                >
-                  كل الشعب
-                </button>
-                {['A', 'B', 'C', 'D'].map((letter) => (
+                {role !== 'teacher' && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedSubclass(null); setShowSubclassDropdown(false); }}
+                    className="w-full rounded-xl px-3 py-2 text-right text-sm hover:bg-gray-100"
+                  >
+                    كل الشعب
+                  </button>
+                )}
+                {availableSubclasses.map((letter) => (
                   <button
                     key={letter}
                     type="button"
