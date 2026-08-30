@@ -1316,7 +1316,7 @@ function App() {
                         {assignment.subject === 'Tests' ? 'اختبار' : 'مهمة'} · الصف {assignment.class_level} · الشعبة {assignment.subclass}
                       </span>
                     </div>
-                    <h3 className="text-xl font-semibold mb-4">
+                    <h3 data-user-content className="text-xl font-semibold mb-4">
                       {assignment.title}
                     </h3>
                     <div className="flex items-center justify-between">
@@ -1479,7 +1479,7 @@ function App() {
                         Class {assignment.class_level}
                       </span>
                     </div>
-                    <h4 className="font-semibold">{assignment.title}</h4>
+                    <h4 data-user-content className="font-semibold">{assignment.title}</h4>
                     <p className="text-sm text-gray-600 mt-1">
                       Due:{' '}
                       {format(new Date(assignment.deadline), 'MMM dd, yyyy')}

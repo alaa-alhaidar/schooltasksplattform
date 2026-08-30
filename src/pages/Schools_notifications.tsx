@@ -372,13 +372,13 @@ function Notifications() {
                       className="w-12 h-12 rounded-full"
                     />
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg">{notification.title}</h3>
-                      <p className="text-gray-600 mt-2">
+                      <h3 data-user-content className="font-semibold text-lg">{notification.title}</h3>
+                      <p data-user-content className="text-gray-600 mt-2">
                         {notification.message}
                       </p>
                       <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-gray-500">
                         <User size={16} />
-                        <span>{notification.teacher_full_name}</span>
+                        <span data-user-content>{notification.teacher_full_name}</span>
                         <span className="text-gray-300">·</span>
                         <Clock size={16} />
                         <span>
@@ -459,7 +459,7 @@ function Notifications() {
                     }`}
                   >
                     <h4 className="font-semibold text-sm">
-                      {notification.title}
+                      <span data-user-content>{notification.title}</span>
                     </h4>
                     <p className="text-sm text-gray-600 mt-1">
                       {format(

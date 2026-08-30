@@ -122,7 +122,7 @@ function WeeklyPlanCard({
           ) : (
             <BookOpen className="shrink-0" size={18} />
           )}
-          <h3 className="font-semibold leading-tight">{item.title}</h3>
+          <h3 data-user-content className="font-semibold leading-tight">{item.title}</h3>
         </div>
         {item.subject && (
           <span className="shrink-0 rounded-full bg-white/70 px-2 py-1 text-xs font-medium">
@@ -140,7 +140,7 @@ function WeeklyPlanCard({
         )}
       </div>
       {item.description && (
-        <p className="text-sm leading-6 opacity-80">{item.description}</p>
+        <p data-user-content className="text-sm leading-6 opacity-80">{item.description}</p>
       )}
       {item.due_at && (
         <div className="mt-3 flex items-center gap-1.5 text-xs font-medium opacity-70">
@@ -574,7 +574,7 @@ export default function Schools() {
                 <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
                   {selectedItem.item_type === 'assignment' ? 'مهمة' : selectedItem.item_type === 'announcement' ? 'إشعار' : selectedItem.item_type === 'event' ? 'موعد' : 'جدول دراسي'}
                 </span>
-                <h2 id="plan-item-title" className="mt-3 text-2xl font-bold">
+                <h2 data-user-content id="plan-item-title" className="mt-3 text-2xl font-bold">
                   {selectedItem.title}
                 </h2>
               </div>
@@ -614,7 +614,7 @@ export default function Schools() {
               )}
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">الوصف</dt>
-                <dd className="mt-2 whitespace-pre-wrap leading-7 text-slate-700">
+                <dd data-user-content className="mt-2 whitespace-pre-wrap leading-7 text-slate-700">
                   {selectedItem.description || 'لا يوجد وصف إضافي.'}
                 </dd>
               </div>
@@ -625,7 +625,7 @@ export default function Schools() {
                   attachmentUrl ? (
                     <a href={attachmentUrl} target="_blank" rel="noreferrer" className="flex min-w-0 w-full max-w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-slate-100 px-4 py-3 font-semibold hover:bg-slate-200">
                       <Paperclip className="shrink-0" size={18} />
-                      <span className="attachment-filename min-w-0 max-w-full text-center leading-5">
+                      <span data-user-content className="attachment-filename min-w-0 max-w-full text-center leading-5">
                         {selectedItem.attachment_name || 'فتح المرفق'}
                       </span>
                     </a>

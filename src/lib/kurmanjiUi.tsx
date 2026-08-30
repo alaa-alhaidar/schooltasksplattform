@@ -46,6 +46,7 @@ export function KurmanjiUiTranslator({ enabled }: { enabled: boolean }) {
       const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT);
       let node: Node | null;
       while ((node = walker.nextNode())) {
+        if (node.parentElement?.closest('[data-user-content]')) continue;
         const translated = translateText(node.textContent || '');
         if (translated) node.textContent = translated;
       }
