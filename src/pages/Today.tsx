@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Bell,
   BookOpen,
   CalendarClock,
-  Clock3,
   ExternalLink,
   FileText,
-  PackageOpen,
   Paperclip,
   RefreshCw,
   School,
 } from 'lucide-react';
-import { addDays, format, isSameDay, parseISO, startOfDay } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { arSA } from 'date-fns/locale';
 import { supabase } from '../lib/supabase';
 import { useAppIdentity } from '../layout/AppLayout';
@@ -38,14 +35,6 @@ interface Assignment {
   external_link: string | null;
 }
 
-interface Notice {
-  id: string;
-  title: string;
-  message: string;
-  created_at: string;
-  expires_at: string | null;
-}
-
 const englishDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const subjectLabels: Record<string, string> = {
   Assignments: 'مهمة', Mathematics: 'الرياضيات', German: 'اللغة الألمانية',
@@ -62,7 +51,6 @@ export default function Today() {
   const identity = useAppIdentity();
   const [schedule, setSchedule] = useState<ScheduleEntry[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const today = useMemo(() => startOfDay(new Date()), []);
@@ -78,7 +66,7 @@ export default function Today() {
     setLoading(true);
     const cacheKey = `schooltasks:today:${identity.classId}`;
     try {
-      const [scheduleResult, assignmentsResult, noticesResult] = await Promise.all([
+      const [scheduleResult, assignmentsResult] = await Promise.all([
         supabase
           .from('class_schedule_entries')
           .select('id, day, start_time, end_time, subject, teacher, room')
@@ -91,34 +79,18 @@ export default function Today() {
           .eq('school', identity.schoolId)
           .eq('class_level', String(identity.classLevel))
           .ilike('subclass', identity.subclass)
-          .gte('deadline', format(today, 'yyyy-MM-dd'))
-          .lte('deadline', format(addDays(today, 7), 'yyyy-MM-dd'))
+          .eq('deadline', format(today, 'yyyy-MM-dd'))
           .order('deadline', { ascending: true }),
-        supabase
-          .from('notifications')
-          .select('id, title, message, created_at, expires_at')
-          .eq('school_id', identity.schoolId)
-          .eq('class_level', String(identity.classLevel))
-          .ilike('subclass', identity.subclass)
-          .order('created_at', { ascending: false }),
       ]);
 
       if (scheduleResult.error) throw scheduleResult.error;
       if (assignmentsResult.error) throw assignmentsResult.error;
-      if (noticesResult.error) throw noticesResult.error;
-
-      const now = new Date();
-      const activeNotices = (noticesResult.data || []).filter((notice) =>
-        new Date(notice.created_at) <= now && (!notice.expires_at || new Date(notice.expires_at) >= now)
-      );
       const payload = {
         schedule: scheduleResult.data || [],
         assignments: assignmentsResult.data || [],
-        notices: activeNotices,
       };
       setSchedule(payload.schedule);
       setAssignments(payload.assignments);
-      setNotices(payload.notices);
       window.localStorage.setItem(cacheKey, JSON.stringify(payload));
       markAppSynced();
       setError(null);
@@ -126,11 +98,12 @@ export default function Today() {
       const cached = window.localStorage.getItem(cacheKey);
       if (cached) {
         const payload = JSON.parse(cached) as {
-          schedule: ScheduleEntry[]; assignments: Assignment[]; notices: Notice[];
+          schedule: ScheduleEntry[]; assignments: Assignment[];
         };
         setSchedule(payload.schedule);
-        setAssignments(payload.assignments);
-        setNotices(payload.notices);
+        setAssignments(
+          payload.assignments.filter((item) => item.deadline.slice(0, 10) === format(today, 'yyyy-MM-dd'))
+        );
         setError(navigator.onLine ? 'تعذر التحديث. يتم عرض آخر نسخة محفوظة.' : null);
       } else {
         setError(loadError instanceof Error ? loadError.message : 'تعذر تحميل ملخص اليوم.');
@@ -141,10 +114,6 @@ export default function Today() {
   }, [identity.classId, identity.classLevel, identity.schoolId, identity.subclass, today, todayName]);
 
   useEffect(() => { void loadToday(); }, [loadToday]);
-
-  const todayAssignments = assignments.filter((item) => isSameDay(parseISO(item.deadline), today));
-  const upcomingAssignments = assignments.filter((item) => !isSameDay(parseISO(item.deadline), today));
-  const materials = assignments.filter((item) => item.attachment_path || item.external_link);
 
   if (loading) {
     return <div className="flex min-h-screen items-center justify-center"><RefreshCw className="animate-spin" size={32} /></div>;
@@ -164,14 +133,14 @@ export default function Today() {
 
         {error && <div className="mt-6 rounded-2xl bg-amber-50 p-4 text-amber-900 dark:bg-amber-950 dark:text-amber-100">{error}</div>}
 
-        <section className="mt-8 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+        <section className="mt-8 grid items-start gap-6 lg:grid-cols-2">
           <div className="rounded-3xl bg-white p-6 shadow-sm dark:bg-[#1b222c]">
             <h2 className="flex items-center gap-2 text-xl font-black"><CalendarClock size={22} /> حصص اليوم</h2>
             <div className="mt-5 space-y-3">
               {schedule.map((item) => (
-                <article key={item.id} className="flex items-center gap-4 rounded-2xl bg-blue-50 p-4 dark:bg-blue-950/60">
+                <article key={item.id} className="flex items-center gap-4 rounded-2xl bg-slate-50 p-4 text-slate-900 dark:bg-[#252d38] dark:text-slate-100">
                   <div className="min-w-24 text-center font-black">{formatTime(item.start_time)}–{formatTime(item.end_time)}</div>
-                  <div className="h-10 w-px bg-blue-200 dark:bg-blue-800" />
+                  <div className="h-10 w-px bg-slate-200 dark:bg-slate-600" />
                   <div><h3 className="font-bold">{subjectLabels[item.subject] || item.subject}</h3>{(item.room || item.teacher) && <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{[item.teacher, item.room].filter(Boolean).join(' · ')}</p>}</div>
                 </article>
               ))}
@@ -180,27 +149,12 @@ export default function Today() {
           </div>
 
           <div className="rounded-3xl bg-white p-6 shadow-sm dark:bg-[#1b222c]">
-            <h2 className="flex items-center gap-2 text-xl font-black"><BookOpen size={22} /> مهام اليوم <Count value={todayAssignments.length} /></h2>
+            <h2 className="flex items-center gap-2 text-xl font-black"><BookOpen size={22} /> مهام اليوم <Count value={assignments.length} /></h2>
             <div className="mt-5 space-y-3">
-              {todayAssignments.map((item) => <AssignmentRow key={item.id} item={item} />)}
-              {todayAssignments.length === 0 && <Empty text="لا توجد مهام مستحقة اليوم." />}
+              {assignments.map((item) => <AssignmentRow key={item.id} item={item} />)}
+              {assignments.length === 0 && <Empty text="لا توجد مهام مستحقة اليوم." />}
             </div>
           </div>
-        </section>
-
-        <section className="mt-6 grid gap-6 lg:grid-cols-3">
-          <Panel icon={CalendarClock} title="قريباً" count={upcomingAssignments.length}>
-            {upcomingAssignments.slice(0, 5).map((item) => <AssignmentRow key={item.id} item={item} showDate />)}
-            {upcomingAssignments.length === 0 && <Empty text="لا توجد مهام قريبة." />}
-          </Panel>
-          <Panel icon={Bell} title="تنبيهات حالية" count={notices.length}>
-            {notices.slice(0, 4).map((notice) => <article key={notice.id} className="rounded-2xl bg-amber-50 p-4 dark:bg-amber-950/60"><h3 className="font-bold">{notice.title}</h3><p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{notice.message}</p></article>)}
-            {notices.length === 0 && <Empty text="لا توجد تنبيهات حالية." />}
-          </Panel>
-          <Panel icon={PackageOpen} title="المواد المطلوبة" count={materials.length}>
-            {materials.slice(0, 5).map((item) => <article key={item.id} className="rounded-2xl bg-emerald-50 p-4 dark:bg-emerald-950/60"><h3 className="font-bold">{item.title}</h3><div className="mt-3 flex flex-wrap gap-2">{item.attachment_path && <span className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-bold text-red-600 dark:bg-slate-800"><Paperclip size={13} /> {item.attachment_name || 'ورقة عمل'}</span>}{item.external_link && <a href={item.external_link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-slate-800 dark:text-emerald-300"><ExternalLink size={13} /> رابط خارجي</a>}</div></article>)}
-            {materials.length === 0 && <Empty text="لا توجد مواد إضافية مطلوبة." />}
-          </Panel>
         </section>
       </div>
     </main>
@@ -215,10 +169,6 @@ function Empty({ text }: { text: string }) {
   return <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-center text-sm text-slate-400 dark:border-slate-700">{text}</div>;
 }
 
-function AssignmentRow({ item, showDate = false }: { item: Assignment; showDate?: boolean }) {
-  return <article className="rounded-2xl bg-emerald-50 p-4 dark:bg-emerald-950/60"><div className="flex items-start justify-between gap-3"><div><h3 className="font-bold">{item.title}</h3><p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{subjectLabels[item.subject] || item.subject}</p></div>{(item.attachment_path || item.external_link) && <FileText className="shrink-0 text-red-500" size={18} />}</div>{item.note && <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">{item.note}</p>}{showDate && <p className="mt-3 flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-300"><Clock3 size={13} /> {format(parseISO(item.deadline), 'EEEE، d MMMM', { locale: arSA })}</p>}</article>;
-}
-
-function Panel({ icon: Icon, title, count, children }: { icon: typeof Bell; title: string; count: number; children: React.ReactNode }) {
-  return <div className="rounded-3xl bg-white p-6 shadow-sm dark:bg-[#1b222c]"><h2 className="flex items-center gap-2 text-xl font-black"><Icon size={22} /> {title} <Count value={count} /></h2><div className="mt-5 space-y-3">{children}</div></div>;
+function AssignmentRow({ item }: { item: Assignment }) {
+  return <article className="rounded-2xl bg-emerald-100 p-5 text-emerald-950 dark:bg-[#23483d] dark:text-emerald-50"><div className="flex items-start justify-between gap-3"><div><h3 className="font-bold">{item.title}</h3><p className="mt-1 text-xs text-emerald-800 dark:text-emerald-200">{subjectLabels[item.subject] || item.subject}</p></div>{(item.attachment_path || item.external_link) && <FileText className="shrink-0 text-red-500 dark:text-red-300" size={18} />}</div>{item.note && <p className="mt-3 text-sm leading-6 text-emerald-900/75 dark:text-emerald-100/80">{item.note}</p>}{(item.attachment_path || item.external_link) && <div className="mt-4 flex flex-wrap gap-2">{item.attachment_path && <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-red-600 dark:bg-black/20 dark:text-red-200"><Paperclip className="shrink-0" size={13} /><span className="truncate">{item.attachment_name || 'ورقة عمل'}</span></span>}{item.external_link && <a href={item.external_link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-black/20 dark:text-emerald-100"><ExternalLink size={13} /> رابط</a>}</div>}</article>;
 }
