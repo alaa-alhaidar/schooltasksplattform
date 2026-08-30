@@ -15,6 +15,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { signOut, supabase } from '../lib/supabase';
 import { LAST_SYNC_KEY, SYNC_EVENT } from '../lib/syncStatus';
 import { acquireClassWriteSession } from '../lib/classWriteSession';
+import { KurmanjiUiTranslator } from '../lib/kurmanjiUi';
 
 export interface AppIdentity {
   userId: string | null;
@@ -68,7 +69,7 @@ export default function AppLayout() {
   useEffect(() => {
     window.localStorage.setItem('schooltasks:language', language);
     document.documentElement.lang = language === 'ku' ? 'ku' : 'ar';
-    document.documentElement.dir = language === 'ku' ? 'ltr' : 'rtl';
+    document.documentElement.dir = 'rtl';
   }, [language]);
 
   useEffect(() => {
@@ -320,9 +321,10 @@ export default function AppLayout() {
           </button>
         </aside>
 
-        <div className="app-shell-page mr-20 min-h-screen">
-          <Outlet />
+        <div className="app-shell-page mr-20 min-h-screen" dir="rtl">
+          <Outlet key={language} />
         </div>
+        <KurmanjiUiTranslator enabled={language === 'ku'} />
         {!online && (
           <div className="fixed bottom-4 left-4 z-[80] flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-medium text-white shadow-lg">
             <WifiOff size={15} />

@@ -160,7 +160,7 @@ export default function Today() {
   }
 
   return (
-    <main dir={ku ? 'ltr' : 'rtl'} className="min-h-screen bg-[#faf8f8] px-5 py-8 text-slate-950 dark:bg-[#11151b] dark:text-slate-100 md:px-10 lg:px-16">
+    <main dir="rtl" className="min-h-screen bg-[#faf8f8] px-5 py-8 text-slate-950 dark:bg-[#11151b] dark:text-slate-100 md:px-10 lg:px-16">
       <div className="mx-auto max-w-7xl">
         <header className="flex flex-col justify-between gap-5 border-b border-slate-200 pb-8 dark:border-slate-700 md:flex-row md:items-end">
           <div>

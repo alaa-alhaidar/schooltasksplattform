@@ -38,7 +38,7 @@ export default function Settings() {
   };
 
   return (
-    <main className="min-h-screen bg-[#faf8f8] px-6 py-8 md:px-10 lg:px-14" dir={ku ? 'ltr' : 'rtl'}>
+    <main className="min-h-screen bg-[#faf8f8] px-6 py-8 md:px-10 lg:px-14" dir="rtl">
       <header className="mb-10 border-b border-slate-200 pb-8">
         <div className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-500">
           <SettingsIcon size={18} />
