@@ -19,6 +19,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { signOut, supabase } from './lib/supabase';
 import { getDayColor } from './lib/dayColors';
+import { markAppSynced } from './lib/syncStatus';
 
 interface Profile {
   id: string;
@@ -57,6 +58,8 @@ interface WeeklyPlanItem {
   due_at: string | null;
   weekday: number | null;
   sort_order: number;
+  assignment_id: string | null;
+  notification_id: string | null;
 }
 
 const weekdays = [
@@ -142,6 +145,7 @@ export default function Schools() {
   const [loadingPlan, setLoadingPlan] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<WeeklyPlanItem | null>(null);
+  const [completedAssignments, setCompletedAssignments] = useState<Set<string>>(new Set());
 
   const loadIdentity = useCallback(async () => {
     setLoadingProfile(true);
@@ -205,6 +209,7 @@ export default function Schools() {
 
   const loadWeek = useCallback(async () => {
     if (!classData) return;
+    const weekCacheKey = `schooltasks:week:${classData.id}:${format(weekStart, 'yyyy-MM-dd')}`;
     setLoadingPlan(true);
     setError(null);
     try {
@@ -225,15 +230,31 @@ export default function Schools() {
 
       const { data: planItems, error: itemsError } = await supabase
         .from('weekly_plan_items')
-        .select('id, item_type, title, description, subject, due_at, weekday, sort_order')
+        .select('id, item_type, title, description, subject, due_at, weekday, sort_order, assignment_id, notification_id')
         .eq('weekly_plan_id', planRow.id)
         .order('sort_order', { ascending: true });
       if (itemsError) throw itemsError;
       setItems((planItems || []) as WeeklyPlanItem[]);
-    } catch (loadError: unknown) {
-      setError(
-        getErrorMessage(loadError, 'تعذر تحميل الخطة الأسبوعية.')
+      window.localStorage.setItem(
+        weekCacheKey,
+        JSON.stringify({ plan: planRow, items: planItems || [] })
       );
+      markAppSynced();
+    } catch (loadError: unknown) {
+      const cachedWeek = window.localStorage.getItem(weekCacheKey);
+      if (!navigator.onLine && cachedWeek) {
+        const cached = JSON.parse(cachedWeek) as {
+          plan: WeeklyPlan;
+          items: WeeklyPlanItem[];
+        };
+        setPlan(cached.plan);
+        setItems(cached.items);
+        setError(null);
+      } else {
+        setError(
+          getErrorMessage(loadError, 'تعذر تحميل الخطة الأسبوعية.')
+        );
+      }
     } finally {
       setLoadingPlan(false);
     }
@@ -246,6 +267,72 @@ export default function Schools() {
   useEffect(() => {
     loadWeek();
   }, [loadWeek]);
+
+  useEffect(() => {
+    if (!plan?.id) return;
+    const planChannel = supabase
+      .channel(`weekly-plan-${plan.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'weekly_plan_items',
+          filter: `weekly_plan_id=eq.${plan.id}`,
+        },
+        () => loadWeek()
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(planChannel);
+    };
+  }, [loadWeek, plan?.id]);
+
+  useEffect(() => {
+    if (!profile) return;
+    const loadCompletions = async () => {
+      const { data } = await supabase
+        .from('assignment_completions')
+        .select('assignment_id')
+        .eq('user_id', profile.id);
+      setCompletedAssignments(
+        new Set((data || []).map((row) => row.assignment_id as string))
+      );
+    };
+    loadCompletions();
+  }, [profile]);
+
+  const toggleAssignmentCompletion = async (assignmentId: string) => {
+    if (!profile) return;
+    const completed = completedAssignments.has(assignmentId);
+    setCompletedAssignments((current) => {
+      const next = new Set(current);
+      if (completed) next.delete(assignmentId);
+      else next.add(assignmentId);
+      return next;
+    });
+
+    const { error: completionError } = completed
+      ? await supabase
+          .from('assignment_completions')
+          .delete()
+          .eq('assignment_id', assignmentId)
+          .eq('user_id', profile.id)
+      : await supabase.from('assignment_completions').insert({
+          assignment_id: assignmentId,
+          user_id: profile.id,
+        });
+
+    if (completionError) {
+      setCompletedAssignments((current) => {
+        const next = new Set(current);
+        if (completed) next.add(assignmentId);
+        else next.delete(assignmentId);
+        return next;
+      });
+      setError('تعذر حفظ حالة المهمة.');
+    }
+  };
 
   useEffect(() => {
     if (!selectedItem) return;
@@ -501,6 +588,21 @@ export default function Schools() {
                 </dd>
               </div>
             </dl>
+            {selectedItem.assignment_id && (
+              <button
+                type="button"
+                onClick={() => toggleAssignmentCompletion(selectedItem.assignment_id!)}
+                className={`mt-6 w-full rounded-xl px-5 py-3 font-semibold transition ${
+                  completedAssignments.has(selectedItem.assignment_id)
+                    ? 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                    : 'bg-black text-white hover:bg-slate-800'
+                }`}
+              >
+                {completedAssignments.has(selectedItem.assignment_id)
+                  ? 'تم إنجاز المهمة'
+                  : 'تحديد كمهمة منجزة'}
+              </button>
+            )}
 
             <button
               type="button"

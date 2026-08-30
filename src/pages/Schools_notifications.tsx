@@ -14,6 +14,8 @@ import { format } from 'date-fns';
 import { arSA } from 'date-fns/locale';
 import { supabase, signOut } from '../lib/supabase';
 import { useAppIdentity } from '../layout/AppLayout';
+import { markAppSynced } from '../lib/syncStatus';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface Notification {
   id: string;
@@ -35,13 +37,13 @@ interface SchoolTownData {
 
 function Notifications() {
   const navigate = useNavigate();
-  const { schoolName, schoolFullName, schoolId, email, classLevel, subclass } = useAppIdentity();
+  const { schoolName, schoolFullName, schoolId, userId, email, classLevel, subclass } = useAppIdentity();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(
     null
   );
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [schoolDataLoaded, setSchoolDataLoaded] = useState(false);
@@ -85,6 +87,7 @@ function Notifications() {
         // Don't try to fetch notifications until school data is loaded
         return;
       }
+      const notificationCacheKey = `schooltasks:notifications:${userId}`;
       console.log('Notifications received:', schoolTownData?.id);
 
       try {
@@ -102,12 +105,32 @@ function Notifications() {
 
         if (error) throw error;
 
-        console.log('Notifications received:', data);
-        setNotifications(data || []);
+        const { data: readRows, error: readsError } = await supabase
+          .from('notification_reads')
+          .select('notification_id')
+          .eq('user_id', userId);
+        if (readsError) throw readsError;
+        const readIds = new Set((readRows || []).map((row) => row.notification_id));
+        const loadedNotifications = (data || []).map((notification) => ({
+            ...notification,
+            read: readIds.has(notification.id),
+          }));
+        setNotifications(loadedNotifications);
+        window.localStorage.setItem(
+          notificationCacheKey,
+          JSON.stringify(loadedNotifications)
+        );
+        markAppSynced();
         setError(null);
-      } catch (err: any) {
-        setError(err.message);
-        console.error('Error fetching notifications:', err);
+      } catch (err: unknown) {
+        const cachedNotifications = window.localStorage.getItem(notificationCacheKey);
+        if (!navigator.onLine && cachedNotifications) {
+          setNotifications(JSON.parse(cachedNotifications) as Notification[]);
+          setError(null);
+        } else {
+          setError(err instanceof Error ? err.message : 'تعذر تحميل الإشعارات.');
+          console.error('Error fetching notifications:', err);
+        }
       } finally {
         setLoading(false);
       }
@@ -115,7 +138,56 @@ function Notifications() {
 
     getNotifications();
     // We're now explicitly dependent on schoolDataLoaded to prevent premature fetching
-  }, [schoolDataLoaded, schoolTownData?.id]);
+  }, [classLevel, schoolDataLoaded, schoolTownData?.id, subclass, userId]);
+
+  useEffect(() => {
+    if (!schoolTownData?.id) return;
+    const notificationChannel = supabase
+      .channel(`student-notifications-${schoolTownData.id}-${classLevel}-${subclass}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `school_id=eq.${schoolTownData.id}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'DELETE') {
+            setNotifications((current) =>
+              current.filter((item) => item.id !== payload.old.id)
+            );
+            return;
+          }
+
+          const incoming = payload.new as Notification;
+          if (
+            String(incoming.class_level) !== String(classLevel) ||
+            incoming.subclass?.toUpperCase() !== subclass?.toUpperCase()
+          ) {
+            return;
+          }
+
+          setNotifications((current) => {
+            const existing = current.find((item) => item.id === incoming.id);
+            const nextNotification = {
+              ...incoming,
+              read: existing?.read || false,
+            };
+            return existing
+              ? current.map((item) =>
+                  item.id === incoming.id ? nextNotification : item
+                )
+              : [nextNotification, ...current];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(notificationChannel);
+    };
+  }, [classLevel, schoolTownData?.id, subclass]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -124,10 +196,13 @@ function Notifications() {
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
+      if (!userId) return;
       const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', notificationId);
+        .from('notification_reads')
+        .upsert(
+          { notification_id: notificationId, user_id: userId },
+          { onConflict: 'notification_id,user_id' }
+        );
 
       if (error) throw error;
 
@@ -136,9 +211,9 @@ function Notifications() {
           n.id === notificationId ? { ...n, read: true } : n
         )
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error marking notification as read:', error);
-      setError(error.message);
+      setError(error instanceof Error ? error.message : 'تعذر حفظ حالة القراءة.');
     }
   };
 

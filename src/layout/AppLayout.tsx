@@ -6,9 +6,11 @@ import {
   Home,
   LogOut,
   RefreshCw,
+  WifiOff,
 } from 'lucide-react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { signOut, supabase } from '../lib/supabase';
+import { LAST_SYNC_KEY, SYNC_EVENT } from '../lib/syncStatus';
 
 export interface AppIdentity {
   userId: string | null;
@@ -47,6 +49,24 @@ export default function AppLayout() {
   const location = useLocation();
   const [identity, setIdentity] = useState<AppIdentity>(emptyIdentity);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [online, setOnline] = useState(() => navigator.onLine);
+  const [lastSync, setLastSync] = useState<string | null>(() =>
+    window.localStorage.getItem(LAST_SYNC_KEY)
+  );
+
+  useEffect(() => {
+    const updateOnlineStatus = () => setOnline(navigator.onLine);
+    const updateLastSync = (event: Event) =>
+      setLastSync((event as CustomEvent<string>).detail);
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    window.addEventListener(SYNC_EVENT, updateLastSync);
+    return () => {
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+      window.removeEventListener(SYNC_EVENT, updateLastSync);
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -261,6 +281,15 @@ export default function AppLayout() {
         <div className="app-shell-page mr-20 min-h-screen">
           <Outlet />
         </div>
+        {!online && (
+          <div className="fixed bottom-4 left-4 z-[80] flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-medium text-white shadow-lg">
+            <WifiOff size={15} />
+            <span>
+              دون اتصال
+              {lastSync && ` · آخر تحديث ${new Date(lastSync).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' })}`}
+            </span>
+          </div>
+        )}
       </div>
     </AppIdentityContext.Provider>
   );

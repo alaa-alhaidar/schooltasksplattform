@@ -14,6 +14,7 @@ import {
 import type { User } from '@supabase/supabase-js';
 import { supabase, signOut } from './lib/supabase';
 import { getEnglishDayColor } from './lib/dayColors';
+import { markAppSynced } from './lib/syncStatus';
 import { useAppIdentity } from './layout/AppLayout';
 
 interface ScheduleItem {
@@ -293,6 +294,7 @@ function WeeklySchedule() {
 
     const loadSchedule = async (showLoading = true) => {
       if (showLoading) setLoading(true);
+      const scheduleCacheKey = `schooltasks:schedule:${selectedClassId}`;
       const { data, error: scheduleError } = await supabase
         .from('class_schedule_entries')
         .select('id, day, start_time, end_time, subject, teacher, room')
@@ -300,17 +302,24 @@ function WeeklySchedule() {
         .order('start_time', { ascending: true });
 
       if (scheduleError) {
-        setError('تعذر تحميل الجدول الدراسي.');
-        setSchedule([]);
+        const cachedSchedule = window.localStorage.getItem(scheduleCacheKey);
+        if (!navigator.onLine && cachedSchedule) {
+          setSchedule(JSON.parse(cachedSchedule) as ScheduleItem[]);
+          setError(null);
+        } else {
+          setError('تعذر تحميل الجدول الدراسي.');
+          setSchedule([]);
+        }
       } else {
-        setSchedule(
-          (data || []).map((item) => ({
+        const loadedSchedule = (data || []).map((item) => ({
             ...item,
             start_time: normalizeDatabaseTime(item.start_time),
             end_time: normalizeDatabaseTime(item.end_time),
             color: 'bg-green-100 border-green-400',
-          }))
-        );
+          }));
+        setSchedule(loadedSchedule);
+        window.localStorage.setItem(scheduleCacheKey, JSON.stringify(loadedSchedule));
+        markAppSynced();
         setError(null);
       }
       if (showLoading) setLoading(false);
