@@ -12,6 +12,7 @@ import {
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { signOut, supabase } from '../lib/supabase';
 import { LAST_SYNC_KEY, SYNC_EVENT } from '../lib/syncStatus';
+import { acquireClassWriteSession } from '../lib/classWriteSession';
 
 export interface AppIdentity {
   userId: string | null;
@@ -68,6 +69,14 @@ export default function AppLayout() {
       window.removeEventListener(SYNC_EVENT, updateLastSync);
     };
   }, []);
+
+  useEffect(() => {
+    if (identity.role !== 'teacher' || !identity.classId) return;
+    const keepTeacherSessionActive = () => void acquireClassWriteSession(identity.classId!);
+    keepTeacherSessionActive();
+    const heartbeat = window.setInterval(keepTeacherSessionActive, 60_000);
+    return () => window.clearInterval(heartbeat);
+  }, [identity.classId, identity.role]);
 
   useEffect(() => {
     let active = true;

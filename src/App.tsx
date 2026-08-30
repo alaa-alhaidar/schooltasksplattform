@@ -26,6 +26,7 @@ import { supabase, signIn, signUp, signOut } from './lib/supabase';
 import { getDateDayColor } from './lib/dayColors';
 import { Pencil, Trash2, Info } from 'lucide-react';
 import { useAppIdentity } from './layout/AppLayout';
+import { acquireClassWriteSession } from './lib/classWriteSession';
 
 interface Teacher {
   id: string;
@@ -330,6 +331,25 @@ function App() {
     navigate('/login');
   };
 
+  const ensureClassWriteSession = async (
+    targetClassLevel: number | string,
+    targetSubclass: string
+  ) => {
+    if (!schoolTownData?.id) throw new Error('لم يتم العثور على المدرسة.');
+    const { data: classRow, error: classError } = await supabase
+      .from('classes')
+      .select('id')
+      .eq('school_id', schoolTownData.id)
+      .eq('class_level', Number(targetClassLevel))
+      .ilike('subclass', targetSubclass)
+      .order('school_year', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (classError || !classRow) throw new Error('لم يتم العثور على الشعبة المحددة.');
+    const session = await acquireClassWriteSession(classRow.id);
+    if (!session.acquired) throw new Error(session.message || 'الشعبة قيد التعديل في جلسة أخرى.');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -359,6 +379,11 @@ function App() {
       if (!assignmentPayload.title) {
         throw new Error('يرجى إدخال عنوان المهمة.');
       }
+
+      await ensureClassWriteSession(
+        assignmentPayload.class_level,
+        assignmentPayload.subclass
+      );
 
       if (editingAssignment) {
         // Update existing assignment
@@ -405,6 +430,15 @@ function App() {
   const handleDeleteAssignment = async (assignmentId: string) => {
     if (!user) {
       alert('You must be logged in to delete an assignment.');
+      return;
+    }
+
+    const assignment = assignments.find((item) => item.id === assignmentId);
+    if (!assignment) return;
+    try {
+      await ensureClassWriteSession(assignment.class_level, assignment.subclass);
+    } catch (sessionError) {
+      alert(sessionError instanceof Error ? sessionError.message : 'الشعبة قيد التعديل في جلسة أخرى.');
       return;
     }
 
@@ -504,6 +538,10 @@ function App() {
     e.preventDefault();
 
     try {
+      await ensureClassWriteSession(
+        newNotification.class_level,
+        newNotification.subclass
+      );
       // Create a new notification using Supabase
       const { data, error } = await supabase
         .from('notifications')

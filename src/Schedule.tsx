@@ -16,6 +16,10 @@ import { supabase, signOut } from './lib/supabase';
 import { getEnglishDayColor } from './lib/dayColors';
 import { markAppSynced } from './lib/syncStatus';
 import { useAppIdentity } from './layout/AppLayout';
+import {
+  acquireClassWriteSession,
+  releaseClassWriteSession,
+} from './lib/classWriteSession';
 
 interface ScheduleItem {
   id: string;
@@ -235,6 +239,8 @@ function WeeklySchedule() {
   const [showSubclassDropdown, setShowSubclassDropdown] = useState(false);
   const [savingCell, setSavingCell] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [hasWriteSession, setHasWriteSession] = useState(false);
+  const [writeSessionMessage, setWriteSessionMessage] = useState<string | null>(null);
   const [schoolTownData, setSchoolTownData] = useState<SchoolTownData | null>(
     null
   );
@@ -355,6 +361,31 @@ function WeeklySchedule() {
       supabase.removeChannel(scheduleChannel);
     };
   }, [selectedClassId]);
+
+  useEffect(() => {
+    const mayWrite = role === 'super_admin' || role === 'school_admin' || role === 'teacher';
+    if (!selectedClassId || !mayWrite) {
+      setHasWriteSession(false);
+      setWriteSessionMessage(null);
+      return;
+    }
+
+    let active = true;
+    const acquire = async () => {
+      const result = await acquireClassWriteSession(selectedClassId);
+      if (!active) return;
+      setHasWriteSession(result.acquired);
+      setWriteSessionMessage(result.message);
+    };
+    acquire();
+    const heartbeat = window.setInterval(acquire, 60_000);
+
+    return () => {
+      active = false;
+      window.clearInterval(heartbeat);
+      if (role !== 'teacher') void releaseClassWriteSession(selectedClassId);
+    };
+  }, [role, selectedClassId]);
 
   // School data comes from the shared, persistent app identity.
   useEffect(() => {
@@ -483,8 +514,9 @@ function WeeklySchedule() {
     setSavingCell(null);
   };
 
-  const canEditSchedule =
+  const canManageSchedule =
     role === 'super_admin' || role === 'school_admin' || role === 'teacher';
+  const canEditSchedule = canManageSchedule && hasWriteSession;
   const selectedClass = classes.find((classItem) => classItem.id === selectedClassId);
   const classLevels = Array.from(
     new Set(classes.map((classItem) => classItem.class_level))
@@ -599,7 +631,7 @@ function WeeklySchedule() {
           <h1 className="text-3xl font-bold md:text-4xl">
             {schoolTownData?.school_full_name || schoolName}
           </h1>
-          {canEditSchedule && classes.length > 0 ? (
+          {canManageSchedule && classes.length > 0 ? (
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <div className="relative">
                 <button
@@ -671,7 +703,7 @@ function WeeklySchedule() {
           <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 className="text-xl font-semibold">الحصص الأسبوعية</h2>
-              {canEditSchedule && (
+              {canManageSchedule && (
                 <p className="mt-1 text-sm text-gray-500">
                   اختر محتوى كل حصة من القائمة داخل الجدول. يتم الحفظ تلقائياً
                   {selectedClass && ` للصف ${selectedClass.class_level}، الشعبة ${selectedClass.subclass.toUpperCase()}`}.
@@ -684,6 +716,12 @@ function WeeklySchedule() {
           {saveError && (
             <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
               {saveError}
+            </div>
+          )}
+
+          {writeSessionMessage && (
+            <div className="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+              {writeSessionMessage}
             </div>
           )}
 
