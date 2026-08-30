@@ -17,7 +17,7 @@ export interface AppIdentity {
   userId: string | null;
   email: string | null;
   fullName: string | null;
-  role: 'student' | 'parent' | 'teacher' | 'school_admin' | null;
+  role: 'student' | 'parent' | 'teacher' | 'school_admin' | 'super_admin' | null;
   schoolName: string | null;
   schoolFullName: string | null;
   schoolId: string | null;

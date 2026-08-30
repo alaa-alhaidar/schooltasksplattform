@@ -473,7 +473,8 @@ function WeeklySchedule() {
     setSavingCell(null);
   };
 
-  const canEditSchedule = role === 'school_admin' || role === 'teacher';
+  const canEditSchedule =
+    role === 'super_admin' || role === 'school_admin' || role === 'teacher';
   const selectedClass = classes.find((classItem) => classItem.id === selectedClassId);
   const classLevels = Array.from(
     new Set(classes.map((classItem) => classItem.class_level))

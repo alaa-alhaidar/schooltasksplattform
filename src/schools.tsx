@@ -34,7 +34,7 @@ interface Profile {
   id: string;
   email: string;
   full_name: string;
-  role: 'student' | 'parent' | 'teacher' | 'school_admin';
+  role: 'student' | 'parent' | 'teacher' | 'school_admin' | 'super_admin';
 }
 
 interface ClassData {
