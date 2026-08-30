@@ -128,6 +128,15 @@ function WeeklyPlanCard({
             {subjectLabels[item.subject] || item.subject}
           </span>
         )}
+        {item.attachment_path && (
+          <span
+            className="inline-flex shrink-0 items-center justify-center rounded-full bg-white/70 p-1.5"
+            title="تحتوي المهمة على مرفق"
+            aria-label="تحتوي المهمة على مرفق"
+          >
+            <Paperclip size={15} />
+          </span>
+        )}
       </div>
       {item.description && (
         <p className="text-sm leading-6 opacity-80">{item.description}</p>
