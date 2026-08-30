@@ -429,9 +429,9 @@ export default function Schools() {
             <button onClick={() => setWeekStart((date) => addWeeks(date, -1))} className="rounded-xl p-2 hover:bg-slate-100" aria-label="الأسبوع السابق">
               <ChevronRight size={21} />
             </button>
-            <button onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))} className="min-w-48 rounded-xl px-3 py-2 text-center hover:bg-slate-50">
+            <button onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))} className="week-picker-button min-w-48 rounded-xl px-3 py-2 text-center transition-colors">
               <div className="font-semibold">الأسبوع {getISOWeek(weekStart)}</div>
-              <div className="text-xs text-slate-500">
+              <div className="week-picker-date text-xs text-slate-500">
                 {format(weekStart, 'dd MMM', { locale: arSA })} – {format(addDays(weekStart, 6), 'dd MMM yyyy', { locale: arSA })}
               </div>
             </button>
