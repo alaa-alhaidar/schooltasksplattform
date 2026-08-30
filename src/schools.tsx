@@ -228,6 +228,30 @@ export default function Schools() {
     setLoadingPlan(true);
     setError(null);
     try {
+      const weekEnd = addDays(weekStart, 7);
+      const { data: activeNotices, error: noticesError } = await supabase
+        .from('notifications')
+        .select('id, title, message, expires_at, created_at')
+        .eq('school_id', classData.school_id)
+        .eq('class_level', String(classData.class_level))
+        .ilike('subclass', classData.subclass)
+        .lt('created_at', weekEnd.toISOString())
+        .gte('expires_at', weekStart.toISOString())
+        .order('created_at', { ascending: false });
+      if (noticesError) throw noticesError;
+      const noticeItems: WeeklyPlanItem[] = (activeNotices || []).map((notice, index) => ({
+        id: `notice-${notice.id}`,
+        item_type: 'announcement',
+        title: notice.title,
+        description: notice.message,
+        subject: null,
+        due_at: notice.expires_at,
+        weekday: null,
+        sort_order: 100 + index,
+        assignment_id: null,
+        notification_id: notice.id,
+      }));
+
       const { data: planRow, error: planError } = await supabase
         .from('weekly_plans')
         .select('id, title, week_start, status')
@@ -239,7 +263,7 @@ export default function Schools() {
       if (planError) throw planError;
       if (!planRow) {
         setPlan(null);
-        setItems([]);
+        setItems(noticeItems);
         return;
       }
       setPlan(planRow as WeeklyPlan);
@@ -250,7 +274,10 @@ export default function Schools() {
         .eq('weekly_plan_id', planRow.id)
         .order('sort_order', { ascending: true });
       if (itemsError) throw itemsError;
-      const currentWeekItems = (planItems || []) as WeeklyPlanItem[];
+      const currentWeekItems = [
+        ...(planItems || []).filter((item) => item.item_type !== 'announcement'),
+        ...noticeItems,
+      ] as WeeklyPlanItem[];
       setItems(currentWeekItems);
       window.localStorage.setItem(
         weekCacheKey,
@@ -493,15 +520,7 @@ export default function Schools() {
           <div className="flex min-h-72 items-center justify-center"><RefreshCw className="animate-spin text-slate-400" size={30} /></div>
         )}
 
-        {classData && !loadingPlan && !error && !plan && (
-          <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
-            <CalendarDays className="mx-auto mb-4 text-slate-400" size={40} />
-            <h2 className="text-xl font-semibold">لم تُنشر خطة للأسبوع {getISOWeek(weekStart)} بعد</h2>
-            <p className="mt-2 text-slate-500">انتقل إلى أسبوع آخر أو عد لاحقاً.</p>
-          </div>
-        )}
-
-        {classData && !loadingPlan && plan && (
+        {classData && !loadingPlan && !error && (
           <div className="space-y-8">
             {announcements.length > 0 && (
               <section>
@@ -521,6 +540,9 @@ export default function Schools() {
                   <div key={day.value} className="min-h-52 px-1">
                     <div className={`mb-4 rounded-2xl border px-4 py-3 text-center ${getDayColor(day.value).border} ${getDayColor(day.value).soft}`}>
                       <h3 className="text-xl font-black tracking-wide">{day.label}</h3>
+                      <p className="mt-1 text-sm font-semibold text-slate-500">
+                        {format(addDays(weekStart, day.value - 1), 'dd.MM.yyyy')}
+                      </p>
                     </div>
                     <div className="space-y-3">
                       {day.items.map((item) => (

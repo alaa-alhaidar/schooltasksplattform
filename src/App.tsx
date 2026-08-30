@@ -21,7 +21,7 @@ import {
   Square,
   BookCheck,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { addDays, format } from 'date-fns';
 import { supabase, signIn, signUp, signOut } from './lib/supabase';
 import { getDateDayColor } from './lib/dayColors';
 import { Pencil, Trash2, Info } from 'lucide-react';
@@ -525,6 +525,7 @@ function App() {
   const [newNotification, setNewNotification] = useState({
     title: '',
     message: '',
+    expires_at: format(addDays(new Date(), 7), 'yyyy-MM-dd'),
     class_level: role === 'teacher' && classLevel ? String(classLevel) : '',
     subclass: role === 'teacher' && subclass ? subclass.toUpperCase() : '',
     teacher_id: user?.id,
@@ -549,6 +550,7 @@ function App() {
           {
             title: newNotification.title,
             message: newNotification.message,
+            expires_at: new Date(`${newNotification.expires_at}T23:59:59`).toISOString(),
             teacher_id: user?.id,
             school_id: schoolTownData?.id,
             class_level: newNotification.class_level,
@@ -565,6 +567,7 @@ function App() {
       setNewNotification({
         title: '',
         message: '',
+        expires_at: format(addDays(new Date(), 7), 'yyyy-MM-dd'),
         class_level: role === 'teacher' && classLevel ? String(classLevel) : '',
         subclass: role === 'teacher' && subclass ? subclass.toUpperCase() : '',
         teacher_id: user?.id,
@@ -1051,6 +1054,19 @@ function App() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    صالح حتى
+                  </label>
+                  <input
+                    type="date"
+                    value={newNotification.expires_at}
+                    min={format(new Date(), 'yyyy-MM-dd')}
+                    onChange={(e) => setNewNotification({ ...newNotification, expires_at: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Class Level
                   </label>
                   <select
@@ -1104,6 +1120,7 @@ function App() {
                       setNewNotification({
                         title: '',
                         message: '',
+                        expires_at: format(addDays(new Date(), 7), 'yyyy-MM-dd'),
                         class_level: role === 'teacher' && classLevel ? String(classLevel) : '',
                         subclass: role === 'teacher' && subclass ? subclass.toUpperCase() : '',
                         teacher_id: user?.id,
