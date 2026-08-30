@@ -623,9 +623,9 @@ export default function Schools() {
               <div className={`mt-6 grid min-w-0 gap-3 ${selectedItem.attachment_path && selectedItem.external_link ? 'sm:grid-cols-2' : 'grid-cols-1'}`}>
                 {selectedItem.attachment_path && (
                   attachmentUrl ? (
-                    <a href={attachmentUrl} target="_blank" rel="noreferrer" className="flex min-w-0 max-w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-slate-100 px-4 py-3 font-semibold hover:bg-slate-200">
+                    <a href={attachmentUrl} target="_blank" rel="noreferrer" className="flex min-w-0 w-full max-w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-slate-100 px-4 py-3 font-semibold hover:bg-slate-200">
                       <Paperclip className="shrink-0" size={18} />
-                      <span className="min-w-0 break-all text-center leading-5">
+                      <span className="attachment-filename min-w-0 max-w-full text-center leading-5">
                         {selectedItem.attachment_name || 'فتح المرفق'}
                       </span>
                     </a>

@@ -147,6 +147,13 @@ html.dark .week-picker-button:hover .week-picker-date {
   color: #ffffff !important;
 }
 
+.attachment-filename {
+  display: block;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  white-space: normal;
+}
+
 /* Protected pages share the navigation supplied by AppLayout. */
 .app-shell-page > div > aside {
   display: none;
