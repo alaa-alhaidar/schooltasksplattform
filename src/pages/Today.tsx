@@ -2,11 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BookOpen,
   CalendarClock,
+  Clock3,
+  Download,
   ExternalLink,
   FileText,
   Paperclip,
   RefreshCw,
   School,
+  X,
 } from 'lucide-react';
 import { format, startOfDay } from 'date-fns';
 import { arSA } from 'date-fns/locale';
@@ -33,6 +36,7 @@ interface Assignment {
   attachment_path: string | null;
   attachment_name: string | null;
   external_link: string | null;
+  teacher_full_name: string | null;
 }
 
 const englishDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -53,6 +57,8 @@ export default function Today() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
   const today = useMemo(() => startOfDay(new Date()), []);
   const todayName = englishDays[today.getDay()];
 
@@ -75,7 +81,7 @@ export default function Today() {
           .order('start_time', { ascending: true }),
         supabase
           .from('assignments')
-          .select('id, title, subject, deadline, note, attachment_path, attachment_name, external_link')
+          .select('id, title, subject, deadline, note, attachment_path, attachment_name, external_link, teacher_full_name')
           .eq('school', identity.schoolId)
           .eq('class_level', String(identity.classLevel))
           .ilike('subclass', identity.subclass)
@@ -115,6 +121,19 @@ export default function Today() {
 
   useEffect(() => { void loadToday(); }, [loadToday]);
 
+  useEffect(() => {
+    let active = true;
+    setAttachmentUrl(null);
+    if (!selectedAssignment?.attachment_path) return;
+    void supabase.storage
+      .from('assignment-files')
+      .createSignedUrl(selectedAssignment.attachment_path, 3600)
+      .then(({ data }) => {
+        if (active) setAttachmentUrl(data?.signedUrl || null);
+      });
+    return () => { active = false; };
+  }, [selectedAssignment?.attachment_path]);
+
   if (loading) {
     return <div className="flex min-h-screen items-center justify-center"><RefreshCw className="animate-spin" size={32} /></div>;
   }
@@ -151,11 +170,30 @@ export default function Today() {
           <div className="today-section-card rounded-3xl bg-white p-6 shadow-sm dark:bg-[#1b222c]">
             <h2 className="flex items-center gap-2 text-xl font-black"><BookOpen size={22} /> مهام اليوم <Count value={assignments.length} /></h2>
             <div className="mt-5 space-y-3">
-              {assignments.map((item) => <AssignmentRow key={item.id} item={item} />)}
+              {assignments.map((item) => <AssignmentRow key={item.id} item={item} onClick={() => setSelectedAssignment(item)} />)}
               {assignments.length === 0 && <Empty text="لا توجد مهام مستحقة اليوم." />}
             </div>
           </div>
         </section>
+
+        {selectedAssignment && (
+          <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 p-4" onMouseDown={() => setSelectedAssignment(null)}>
+            <section className="w-full max-w-lg rounded-3xl bg-white p-7 text-slate-950 shadow-2xl dark:bg-[#202833] dark:text-slate-100" onMouseDown={(event) => event.stopPropagation()}>
+              <div className="flex items-start justify-between gap-4">
+                <div><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-100">{subjectLabels[selectedAssignment.subject] || selectedAssignment.subject}</span><h2 className="mt-4 text-2xl font-black">{selectedAssignment.title}</h2></div>
+                <button onClick={() => setSelectedAssignment(null)} className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700" aria-label="إغلاق"><X size={22} /></button>
+              </div>
+              <div className="mt-6 space-y-5">
+                <div><p className="text-xs font-bold text-slate-400">موعد التسليم</p><p className="mt-2 flex items-center gap-2 font-bold"><Clock3 size={17} /> {format(new Date(selectedAssignment.deadline), 'EEEE، d MMMM yyyy', { locale: arSA })}</p></div>
+                {selectedAssignment.note && <div><p className="text-xs font-bold text-slate-400">الوصف</p><p className="mt-2 whitespace-pre-wrap leading-7">{selectedAssignment.note}</p></div>}
+                {selectedAssignment.teacher_full_name && <div><p className="text-xs font-bold text-slate-400">المعلم</p><p className="mt-2 font-semibold">{selectedAssignment.teacher_full_name}</p></div>}
+                {selectedAssignment.attachment_path && (attachmentUrl ? <a href={attachmentUrl} target="_blank" rel="noreferrer" className="flex w-full items-center justify-between gap-3 rounded-2xl bg-red-50 p-4 font-bold text-red-700 dark:bg-red-950/50 dark:text-red-200"><span className="min-w-0 break-all">{selectedAssignment.attachment_name || 'فتح المرفق'}</span><Download className="shrink-0" size={19} /></a> : <div className="rounded-2xl bg-slate-100 p-4 text-center text-sm text-slate-500 dark:bg-slate-700 dark:text-slate-300">جارٍ تجهيز المرفق…</div>)}
+                {selectedAssignment.external_link && <a href={selectedAssignment.external_link} target="_blank" rel="noreferrer" className="flex w-full items-center justify-between rounded-2xl bg-emerald-50 p-4 font-bold text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200"><span>فتح الرابط الخارجي</span><ExternalLink size={19} /></a>}
+              </div>
+              <button onClick={() => setSelectedAssignment(null)} className="mt-7 w-full rounded-2xl bg-black py-3.5 font-bold text-white dark:bg-white dark:text-black">إغلاق</button>
+            </section>
+          </div>
+        )}
       </div>
     </main>
   );
@@ -169,6 +207,6 @@ function Empty({ text }: { text: string }) {
   return <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-center text-sm text-slate-400 dark:border-slate-700">{text}</div>;
 }
 
-function AssignmentRow({ item }: { item: Assignment }) {
-  return <article className="today-task-card rounded-2xl bg-emerald-100 p-5 text-emerald-950"><div className="flex items-start justify-between gap-3"><div><h3 className="text-lg font-black">{item.title}</h3><p className="today-task-subject mt-1 text-xs font-bold text-emerald-800">{subjectLabels[item.subject] || item.subject}</p></div>{(item.attachment_path || item.external_link) && <FileText className="today-task-file shrink-0 text-red-500" size={20} />}</div>{item.note && <p className="today-task-note mt-3 text-sm font-medium leading-6 text-emerald-900/75">{item.note}</p>}{(item.attachment_path || item.external_link) && <div className="mt-4 flex flex-wrap gap-2">{item.attachment_path && <span className="today-task-attachment inline-flex max-w-full items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-red-600"><Paperclip className="shrink-0" size={13} /><span className="truncate">{item.attachment_name || 'ورقة عمل'}</span></span>}{item.external_link && <a href={item.external_link} target="_blank" rel="noreferrer" className="today-task-link inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-emerald-800"><ExternalLink size={13} /> رابط</a>}</div>}</article>;
+function AssignmentRow({ item, onClick }: { item: Assignment; onClick: () => void }) {
+  return <button type="button" onClick={onClick} className="today-task-card w-full rounded-2xl bg-emerald-100 p-5 text-right text-emerald-950 transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"><div className="flex items-start justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-lg font-black">{item.title}</h3><span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-bold">{subjectLabels[item.subject] || item.subject}</span></div></div>{(item.attachment_path || item.external_link) && <FileText className="today-task-file shrink-0 text-red-500" size={20} />}</div>{item.note && <p className="today-task-note mt-3 text-sm font-medium leading-6 text-emerald-900/75">{item.note}</p>}<p className="today-task-note mt-4 flex items-center gap-1.5 text-xs font-bold text-emerald-900/70"><Clock3 size={14} /> التسليم {format(new Date(item.deadline), 'dd.MM.yyyy', { locale: arSA })}</p>{(item.attachment_path || item.external_link) && <div className="mt-4 flex flex-wrap gap-2">{item.attachment_path && <span className="today-task-attachment inline-flex max-w-full items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-red-600"><Paperclip className="shrink-0" size={13} /><span className="truncate">{item.attachment_name || 'ورقة عمل'}</span></span>}{item.external_link && <span className="today-task-link inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-emerald-800"><ExternalLink size={13} /> رابط</span>}</div>}<span className="today-task-note mt-4 block text-xs font-bold text-emerald-900/60">عرض التفاصيل</span></button>;
 }
