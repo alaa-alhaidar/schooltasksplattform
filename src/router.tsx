@@ -15,6 +15,7 @@ import type { User } from '@supabase/supabase-js';
 import AppLayout from './layout/AppLayout';
 import Settings from './pages/Settings';
 import AuditLog from './pages/AuditLog';
+import Landing from './pages/Landing';
 
 // ProtectedRoute component to handle auth logic
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -58,7 +59,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/login" replace />,
+    element: <Landing />,
   },
   {
     path: '/login',
