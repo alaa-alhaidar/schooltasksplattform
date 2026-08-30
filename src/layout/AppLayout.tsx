@@ -8,6 +8,7 @@ import {
   LogOut,
   RefreshCw,
   Settings,
+  Sun,
   WifiOff,
 } from 'lucide-react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -192,7 +193,7 @@ export default function AppLayout() {
   }, []);
 
   const isFamilyView = identity.role === 'student' || identity.role === 'parent';
-  const homePath = isFamilyView ? '/schools' : '/dashboard';
+  const homePath = isFamilyView ? '/today' : '/dashboard';
   const notificationsPath = isFamilyView
     ? '/schools_notifications'
     : '/notifications';
@@ -200,21 +201,22 @@ export default function AppLayout() {
   const navigation = useMemo(
     () => [
       { path: homePath, label: 'الرئيسية', icon: Home },
+      ...(isFamilyView
+        ? [{ path: '/schools', label: 'الخطة الأسبوعية', icon: BookOpen }]
+        : [{ path: '/today', label: 'اليوم', icon: Sun }]),
       { path: '/Schedule', label: 'الجدول الدراسي', icon: CalendarDays },
       { path: notificationsPath, label: 'الإشعارات', icon: Bell },
       ...(identity.role === 'super_admin'
         ? [{ path: '/audit-log', label: 'سجل التغييرات', icon: ClipboardList }]
         : []),
     ],
-    [homePath, identity.role, notificationsPath]
+    [homePath, identity.role, isFamilyView, notificationsPath]
   );
 
   useEffect(() => {
     if (identity.loading) return;
     if (isFamilyView && location.pathname === '/dashboard') {
       navigate('/schools', { replace: true });
-    } else if (!isFamilyView && location.pathname === '/schools') {
-      navigate('/dashboard', { replace: true });
     } else if (isFamilyView && location.pathname === '/notifications') {
       navigate('/schools_notifications', { replace: true });
     } else if (!isFamilyView && location.pathname === '/schools_notifications') {

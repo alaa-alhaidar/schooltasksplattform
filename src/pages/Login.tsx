@@ -22,7 +22,7 @@ const Login = () => {
       if (data.session) {
         const email = data.session.user.email || '';
         const isStudent = /^\d+[a-z]@/i.test(email);
-        navigate(isStudent ? '/schools' : '/dashboard');
+        navigate(isStudent ? '/today' : '/dashboard');
       }
     };
     checkUser();
@@ -57,7 +57,7 @@ const Login = () => {
         const isSchool = !!matches;
   
         if (isSchool) {
-          navigate('/schools', { 
+          navigate('/today', {
             state: { 
               schoolName, 
               classLevel, 

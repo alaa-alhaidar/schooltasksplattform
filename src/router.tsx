@@ -16,6 +16,7 @@ import AppLayout from './layout/AppLayout';
 import Settings from './pages/Settings';
 import AuditLog from './pages/AuditLog';
 import Landing from './pages/Landing';
+import Today from './pages/Today';
 
 // ProtectedRoute component to handle auth logic
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -80,6 +81,7 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
+      { path: '/today', element: <Today /> },
       { path: '/dashboard', element: <App /> },
       { path: '/schools', element: <Schools /> },
       { path: '/notifications', element: <Notifications /> },
