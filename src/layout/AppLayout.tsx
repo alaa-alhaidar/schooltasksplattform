@@ -3,6 +3,7 @@ import {
   Bell,
   BookOpen,
   CalendarDays,
+  ClipboardList,
   Home,
   LogOut,
   RefreshCw,
@@ -201,8 +202,11 @@ export default function AppLayout() {
       { path: homePath, label: 'الرئيسية', icon: Home },
       { path: '/Schedule', label: 'الجدول الدراسي', icon: CalendarDays },
       { path: notificationsPath, label: 'الإشعارات', icon: Bell },
+      ...(identity.role === 'super_admin'
+        ? [{ path: '/audit-log', label: 'سجل التغييرات', icon: ClipboardList }]
+        : []),
     ],
-    [homePath, notificationsPath]
+    [homePath, identity.role, notificationsPath]
   );
 
   useEffect(() => {
