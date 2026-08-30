@@ -13,6 +13,7 @@ import Schools_notifications from './pages/Schools_notifications';
 import { supabase } from './lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import AppLayout from './layout/AppLayout';
+import Settings from './pages/Settings';
 
 // ProtectedRoute component to handle auth logic
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -77,6 +78,7 @@ const router = createBrowserRouter([
         element: <Schools_notifications />,
       },
       { path: '/Schedule', element: <Schedule /> },
+      { path: '/settings', element: <Settings /> },
     ],
   },
 ]);

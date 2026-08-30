@@ -6,6 +6,7 @@ import {
   Home,
   LogOut,
   RefreshCw,
+  Settings,
   WifiOff,
 } from 'lucide-react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -267,6 +268,19 @@ export default function AppLayout() {
               );
             })}
           </nav>
+
+          <button
+            onClick={() => navigate('/settings')}
+            className={`mb-3 rounded-2xl p-3 transition-colors ${
+              location.pathname === '/settings'
+                ? 'bg-slate-100 text-black'
+                : 'text-slate-400 hover:bg-slate-100 hover:text-black'
+            }`}
+            title="الإعدادات"
+            aria-label="الإعدادات"
+          >
+            <Settings size={23} />
+          </button>
 
           <button
             onClick={handleSignOut}

@@ -10,6 +10,85 @@ html[dir='rtl'] body {
   direction: rtl;
 }
 
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body,
+html.dark .app-shell-page,
+html.dark .app-shell-page > div,
+html.dark .app-shell-page main {
+  background-color: #0f1115 !important;
+  color: #f8fafc;
+}
+
+html.dark .bg-white {
+  background-color: #191c22 !important;
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-gray-50,
+html.dark .bg-slate-100,
+html.dark .bg-gray-100 {
+  background-color: #252a33 !important;
+}
+
+html.dark .text-slate-400,
+html.dark .text-slate-500,
+html.dark .text-slate-600,
+html.dark .text-gray-400,
+html.dark .text-gray-500,
+html.dark .text-gray-600,
+html.dark .text-gray-700 {
+  color: #b7c0cc !important;
+}
+
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-gray-300 {
+  border-color: #333945 !important;
+}
+
+html.dark .bg-blue-50,
+html.dark .bg-blue-100 {
+  background-color: #172554 !important;
+  color: #dbeafe !important;
+}
+
+html.dark .bg-violet-50,
+html.dark .bg-violet-100 {
+  background-color: #2e1065 !important;
+  color: #ede9fe !important;
+}
+
+html.dark .bg-amber-50,
+html.dark .bg-amber-100 {
+  background-color: #451a03 !important;
+  color: #fef3c7 !important;
+}
+
+html.dark .bg-teal-50,
+html.dark .bg-teal-100 {
+  background-color: #042f2e !important;
+  color: #ccfbf1 !important;
+}
+
+html.dark .bg-rose-50,
+html.dark .bg-rose-100 {
+  background-color: #4c0519 !important;
+  color: #ffe4e6 !important;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #191c22;
+  color: #f8fafc;
+  border-color: #3b4350;
+}
+
 /* Protected pages share the navigation supplied by AppLayout. */
 .app-shell-page > div > aside {
   display: none;

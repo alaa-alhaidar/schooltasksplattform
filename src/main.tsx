@@ -3,6 +3,11 @@ import { createRoot } from 'react-dom/client';
 import { Router } from './router';
 import './index.css';
 
+document.documentElement.classList.toggle(
+  'dark',
+  window.localStorage.getItem('schooltasks:theme') === 'dark'
+);
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Router />

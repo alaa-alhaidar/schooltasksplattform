@@ -168,6 +168,19 @@ function Notifications() {
             return;
           }
 
+          if (
+            payload.eventType === 'INSERT' &&
+            'Notification' in window &&
+            Notification.permission === 'granted'
+          ) {
+            new Notification(incoming.title, {
+              body: incoming.message,
+              icon: '/school-icon.svg',
+              lang: 'ar',
+              dir: 'rtl',
+            });
+          }
+
           setNotifications((current) => {
             const existing = current.find((item) => item.id === incoming.id);
             const nextNotification = {
