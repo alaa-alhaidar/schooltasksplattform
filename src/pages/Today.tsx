@@ -134,11 +134,11 @@ export default function Today() {
         {error && <div className="mt-6 rounded-2xl bg-amber-50 p-4 text-amber-900 dark:bg-amber-950 dark:text-amber-100">{error}</div>}
 
         <section className="mt-8 grid items-start gap-6 lg:grid-cols-2">
-          <div className="rounded-3xl bg-white p-6 shadow-sm dark:bg-[#1b222c]">
+          <div className="today-section-card rounded-3xl bg-white p-6 shadow-sm dark:bg-[#1b222c]">
             <h2 className="flex items-center gap-2 text-xl font-black"><CalendarClock size={22} /> حصص اليوم</h2>
             <div className="mt-5 space-y-3">
               {schedule.map((item) => (
-                <article key={item.id} className="flex items-center gap-4 rounded-2xl bg-slate-50 p-4 text-slate-900 dark:bg-[#252d38] dark:text-slate-100">
+                <article key={item.id} className="today-lesson-card flex items-center gap-4 rounded-2xl bg-slate-50 p-4 text-slate-900 dark:bg-[#252d38] dark:text-slate-100">
                   <div className="min-w-24 text-center font-black">{formatTime(item.start_time)}–{formatTime(item.end_time)}</div>
                   <div className="h-10 w-px bg-slate-200 dark:bg-slate-600" />
                   <div><h3 className="font-bold">{subjectLabels[item.subject] || item.subject}</h3>{(item.room || item.teacher) && <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{[item.teacher, item.room].filter(Boolean).join(' · ')}</p>}</div>
@@ -148,7 +148,7 @@ export default function Today() {
             </div>
           </div>
 
-          <div className="rounded-3xl bg-white p-6 shadow-sm dark:bg-[#1b222c]">
+          <div className="today-section-card rounded-3xl bg-white p-6 shadow-sm dark:bg-[#1b222c]">
             <h2 className="flex items-center gap-2 text-xl font-black"><BookOpen size={22} /> مهام اليوم <Count value={assignments.length} /></h2>
             <div className="mt-5 space-y-3">
               {assignments.map((item) => <AssignmentRow key={item.id} item={item} />)}
@@ -170,5 +170,5 @@ function Empty({ text }: { text: string }) {
 }
 
 function AssignmentRow({ item }: { item: Assignment }) {
-  return <article className="rounded-2xl bg-emerald-100 p-5 text-emerald-950 dark:bg-[#23483d] dark:text-emerald-50"><div className="flex items-start justify-between gap-3"><div><h3 className="font-bold">{item.title}</h3><p className="mt-1 text-xs text-emerald-800 dark:text-emerald-200">{subjectLabels[item.subject] || item.subject}</p></div>{(item.attachment_path || item.external_link) && <FileText className="shrink-0 text-red-500 dark:text-red-300" size={18} />}</div>{item.note && <p className="mt-3 text-sm leading-6 text-emerald-900/75 dark:text-emerald-100/80">{item.note}</p>}{(item.attachment_path || item.external_link) && <div className="mt-4 flex flex-wrap gap-2">{item.attachment_path && <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-red-600 dark:bg-black/20 dark:text-red-200"><Paperclip className="shrink-0" size={13} /><span className="truncate">{item.attachment_name || 'ورقة عمل'}</span></span>}{item.external_link && <a href={item.external_link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-black/20 dark:text-emerald-100"><ExternalLink size={13} /> رابط</a>}</div>}</article>;
+  return <article className="today-task-card rounded-2xl bg-emerald-100 p-5 text-emerald-950"><div className="flex items-start justify-between gap-3"><div><h3 className="text-lg font-black">{item.title}</h3><p className="today-task-subject mt-1 text-xs font-bold text-emerald-800">{subjectLabels[item.subject] || item.subject}</p></div>{(item.attachment_path || item.external_link) && <FileText className="today-task-file shrink-0 text-red-500" size={20} />}</div>{item.note && <p className="today-task-note mt-3 text-sm font-medium leading-6 text-emerald-900/75">{item.note}</p>}{(item.attachment_path || item.external_link) && <div className="mt-4 flex flex-wrap gap-2">{item.attachment_path && <span className="today-task-attachment inline-flex max-w-full items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-red-600"><Paperclip className="shrink-0" size={13} /><span className="truncate">{item.attachment_name || 'ورقة عمل'}</span></span>}{item.external_link && <a href={item.external_link} target="_blank" rel="noreferrer" className="today-task-link inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-emerald-800"><ExternalLink size={13} /> رابط</a>}</div>}</article>;
 }
