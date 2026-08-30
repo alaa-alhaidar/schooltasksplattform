@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { addDays, addWeeks, format, getISOWeek, startOfWeek } from 'date-fns';
+import {
+  addDays,
+  addWeeks,
+  differenceInCalendarWeeks,
+  format,
+  getISOWeek,
+  parseISO,
+  startOfWeek,
+} from 'date-fns';
 import { arSA } from 'date-fns/locale';
 import {
   Bell,
@@ -226,8 +234,10 @@ export default function Schools() {
         .from('weekly_plans')
         .select('id, title, week_start, status')
         .eq('class_id', classData.id)
-        .eq('week_start', format(weekStart, 'yyyy-MM-dd'))
+        .lte('week_start', format(weekStart, 'yyyy-MM-dd'))
         .eq('status', 'published')
+        .order('week_start', { ascending: false })
+        .limit(1)
         .maybeSingle();
       if (planError) throw planError;
       if (!planRow) {
@@ -243,10 +253,21 @@ export default function Schools() {
         .eq('weekly_plan_id', planRow.id)
         .order('sort_order', { ascending: true });
       if (itemsError) throw itemsError;
-      setItems((planItems || []) as WeeklyPlanItem[]);
+      const weekOffset = differenceInCalendarWeeks(
+        weekStart,
+        parseISO(planRow.week_start),
+        { weekStartsOn: 1 }
+      );
+      const recurringItems = (planItems || []).map((item) => ({
+        ...item,
+        due_at: item.due_at
+          ? addWeeks(new Date(item.due_at), weekOffset).toISOString()
+          : null,
+      })) as WeeklyPlanItem[];
+      setItems(recurringItems);
       window.localStorage.setItem(
         weekCacheKey,
-        JSON.stringify({ plan: planRow, items: planItems || [] })
+        JSON.stringify({ plan: planRow, items: recurringItems })
       );
       markAppSynced();
     } catch (loadError: unknown) {
@@ -303,13 +324,14 @@ export default function Schools() {
       const { data } = await supabase
         .from('assignment_completions')
         .select('assignment_id')
-        .eq('user_id', profile.id);
+        .eq('user_id', profile.id)
+        .eq('week_start', format(weekStart, 'yyyy-MM-dd'));
       setCompletedAssignments(
         new Set((data || []).map((row) => row.assignment_id as string))
       );
     };
     loadCompletions();
-  }, [profile]);
+  }, [profile, weekStart]);
 
   const toggleAssignmentCompletion = async (assignmentId: string) => {
     if (!profile) return;
@@ -327,9 +349,11 @@ export default function Schools() {
           .delete()
           .eq('assignment_id', assignmentId)
           .eq('user_id', profile.id)
+          .eq('week_start', format(weekStart, 'yyyy-MM-dd'))
       : await supabase.from('assignment_completions').insert({
           assignment_id: assignmentId,
           user_id: profile.id,
+          week_start: format(weekStart, 'yyyy-MM-dd'),
         });
 
     if (completionError) {
