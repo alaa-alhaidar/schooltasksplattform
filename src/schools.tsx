@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Flag,
   Home,
   LogOut,
   Map,
@@ -86,9 +87,11 @@ const getErrorMessage = (error: unknown, fallback: string) =>
 function WeeklyPlanCard({
   item,
   onClick,
+  completed = false,
 }: {
   item: WeeklyPlanItem;
   onClick: () => void;
+  completed?: boolean;
 }) {
   const isAnnouncement = item.item_type === 'announcement';
   const dayColor = getDayColor(item.weekday);
@@ -125,6 +128,12 @@ function WeeklyPlanCard({
           <Clock3 size={14} />
           التسليم {format(new Date(item.due_at), 'dd.MM.yyyy، HH:mm', { locale: arSA })}
         </div>
+      )}
+      {completed && (
+        <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm">
+          <Flag size={14} fill="currentColor" />
+          منجزة
+        </span>
       )}
       <span className="mt-3 block text-xs font-semibold opacity-60">عرض التفاصيل</span>
     </button>
@@ -503,7 +512,17 @@ export default function Schools() {
                       <h3 className="text-xl font-black tracking-wide">{day.label}</h3>
                     </div>
                     <div className="space-y-3">
-                      {day.items.map((item) => <WeeklyPlanCard key={item.id} item={item} onClick={() => setSelectedItem(item)} />)}
+                      {day.items.map((item) => (
+                        <WeeklyPlanCard
+                          key={item.id}
+                          item={item}
+                          completed={Boolean(
+                            item.assignment_id &&
+                              completedAssignments.has(item.assignment_id)
+                          )}
+                          onClick={() => setSelectedItem(item)}
+                        />
+                      ))}
                       {day.items.length === 0 && <p className="px-1 py-8 text-center text-sm text-slate-400">لا توجد مهام</p>}
                     </div>
                   </div>
@@ -514,7 +533,15 @@ export default function Schools() {
                   <h3 className="mb-3 font-bold">مهام أخرى</h3>
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {otherItems.map((item) => (
-                      <WeeklyPlanCard key={item.id} item={item} onClick={() => setSelectedItem(item)} />
+                      <WeeklyPlanCard
+                        key={item.id}
+                        item={item}
+                        completed={Boolean(
+                          item.assignment_id &&
+                            completedAssignments.has(item.assignment_id)
+                        )}
+                        onClick={() => setSelectedItem(item)}
+                      />
                     ))}
                   </div>
                 </div>
