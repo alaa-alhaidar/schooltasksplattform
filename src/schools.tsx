@@ -2,10 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   addDays,
   addWeeks,
-  differenceInCalendarWeeks,
   format,
   getISOWeek,
-  parseISO,
   startOfWeek,
 } from 'date-fns';
 import { arSA } from 'date-fns/locale';
@@ -234,9 +232,8 @@ export default function Schools() {
         .from('weekly_plans')
         .select('id, title, week_start, status')
         .eq('class_id', classData.id)
-        .lte('week_start', format(weekStart, 'yyyy-MM-dd'))
+        .eq('week_start', format(weekStart, 'yyyy-MM-dd'))
         .eq('status', 'published')
-        .order('week_start', { ascending: false })
         .limit(1)
         .maybeSingle();
       if (planError) throw planError;
@@ -253,21 +250,11 @@ export default function Schools() {
         .eq('weekly_plan_id', planRow.id)
         .order('sort_order', { ascending: true });
       if (itemsError) throw itemsError;
-      const weekOffset = differenceInCalendarWeeks(
-        weekStart,
-        parseISO(planRow.week_start),
-        { weekStartsOn: 1 }
-      );
-      const recurringItems = (planItems || []).map((item) => ({
-        ...item,
-        due_at: item.due_at
-          ? addWeeks(new Date(item.due_at), weekOffset).toISOString()
-          : null,
-      })) as WeeklyPlanItem[];
-      setItems(recurringItems);
+      const currentWeekItems = (planItems || []) as WeeklyPlanItem[];
+      setItems(currentWeekItems);
       window.localStorage.setItem(
         weekCacheKey,
-        JSON.stringify({ plan: planRow, items: recurringItems })
+        JSON.stringify({ plan: planRow, items: currentWeekItems })
       );
       markAppSynced();
     } catch (loadError: unknown) {
