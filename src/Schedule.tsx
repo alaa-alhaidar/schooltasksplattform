@@ -289,8 +289,13 @@ function WeeklySchedule() {
   useEffect(() => {
     if (!selectedClassId) {
       setSchedule([]);
+      setLoading(false);
       return;
     }
+
+    let isCurrentClass = true;
+    setSchedule([]);
+    setSaveError(null);
 
     const loadSchedule = async (showLoading = true) => {
       if (showLoading) setLoading(true);
@@ -300,6 +305,10 @@ function WeeklySchedule() {
         .select('id, day, start_time, end_time, subject, teacher, room')
         .eq('class_id', selectedClassId)
         .order('start_time', { ascending: true });
+
+      // A slower response for the previously selected class must never
+      // overwrite the schedule after the user has already changed class.
+      if (!isCurrentClass) return;
 
       if (scheduleError) {
         const cachedSchedule = window.localStorage.getItem(scheduleCacheKey);
@@ -342,6 +351,7 @@ function WeeklySchedule() {
       .subscribe();
 
     return () => {
+      isCurrentClass = false;
       supabase.removeChannel(scheduleChannel);
     };
   }, [selectedClassId]);
