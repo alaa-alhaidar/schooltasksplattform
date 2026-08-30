@@ -18,6 +18,8 @@ import {
   LogOut,
   Map,
   Megaphone,
+  Paperclip,
+  ExternalLink,
   RefreshCw,
   School,
   X,
@@ -66,6 +68,10 @@ interface WeeklyPlanItem {
   sort_order: number;
   assignment_id: string | null;
   notification_id: string | null;
+  attachment_path: string | null;
+  attachment_name: string | null;
+  attachment_mime_type: string | null;
+  external_link: string | null;
 }
 
 const weekdays = [
@@ -151,6 +157,7 @@ export default function Schools() {
   const [loadingPlan, setLoadingPlan] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<WeeklyPlanItem | null>(null);
+  const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
 
   const loadIdentity = useCallback(async () => {
     setLoadingProfile(true);
@@ -240,6 +247,10 @@ export default function Schools() {
         sort_order: 100 + index,
         assignment_id: null,
         notification_id: notice.id,
+        attachment_path: null,
+        attachment_name: null,
+        attachment_mime_type: null,
+        external_link: null,
       }));
 
       const { data: planRow, error: planError } = await supabase
@@ -260,7 +271,7 @@ export default function Schools() {
 
       const { data: planItems, error: itemsError } = await supabase
         .from('weekly_plan_items')
-        .select('id, item_type, title, description, subject, due_at, weekday, sort_order, assignment_id, notification_id')
+        .select('id, item_type, title, description, subject, due_at, weekday, sort_order, assignment_id, notification_id, attachment_path, attachment_name, attachment_mime_type, external_link')
         .eq('weekly_plan_id', planRow.id)
         .order('sort_order', { ascending: true });
       if (itemsError) throw itemsError;
@@ -330,6 +341,19 @@ export default function Schools() {
     window.addEventListener('keydown', closeOnEscape);
     return () => window.removeEventListener('keydown', closeOnEscape);
   }, [selectedItem]);
+
+  useEffect(() => {
+    let active = true;
+    setAttachmentUrl(null);
+    if (!selectedItem?.attachment_path) return;
+    supabase.storage
+      .from('assignment-files')
+      .createSignedUrl(selectedItem.attachment_path, 3600)
+      .then(({ data }) => {
+        if (active) setAttachmentUrl(data?.signedUrl || null);
+      });
+    return () => { active = false; };
+  }, [selectedItem?.attachment_path]);
 
   const announcements = useMemo(
     () => items.filter((item) => item.item_type === 'announcement'),
@@ -581,6 +605,27 @@ export default function Schools() {
                 </dd>
               </div>
             </dl>
+            {(selectedItem.attachment_path || selectedItem.external_link) && (
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {selectedItem.attachment_path && (
+                  <a
+                    href={attachmentUrl || undefined}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-disabled={!attachmentUrl}
+                    className={`flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold ${attachmentUrl ? 'bg-slate-100 hover:bg-slate-200' : 'cursor-wait bg-slate-100 opacity-50'}`}
+                  >
+                    <Paperclip size={18} />
+                    {selectedItem.attachment_name || 'فتح المرفق'}
+                  </a>
+                )}
+                {selectedItem.external_link && (
+                  <a href={selectedItem.external_link} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-3 font-semibold hover:bg-slate-200">
+                    <ExternalLink size={18} /> فتح الرابط
+                  </a>
+                )}
+              </div>
+            )}
             <button
               type="button"
               onClick={() => setSelectedItem(null)}

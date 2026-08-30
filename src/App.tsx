@@ -47,6 +47,10 @@ interface Assignment {
   note: string;
   school: string;
   teacher_id: string;
+  attachment_path: string | null;
+  attachment_name: string | null;
+  attachment_mime_type: string | null;
+  external_link: string | null;
 }
 interface SchoolTownData {
   id: string;
@@ -84,6 +88,7 @@ function App() {
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(
     null
   );
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
 
   const [selectedAssignment, setSelectedAssignment] =
     useState<Assignment | null>(null);
@@ -106,6 +111,10 @@ function App() {
     subclass: role === 'teacher' && subclass ? subclass.toUpperCase() : 'A',
     deadline: format(new Date(), 'yyyy-MM-dd'),
     note: '',
+    external_link: '',
+    attachment_path: null as string | null,
+    attachment_name: null as string | null,
+    attachment_mime_type: null as string | null,
     school: schoolTownData?.id,
     teacher_id: user?.id,
     teacher_full_name: 'Teacher', // Still default value initially
@@ -348,6 +357,7 @@ function App() {
     if (classError || !classRow) throw new Error('لم يتم العثور على الشعبة المحددة.');
     const session = await acquireClassWriteSession(classRow.id);
     if (!session.acquired) throw new Error(session.message || 'الشعبة قيد التعديل في جلسة أخرى.');
+    return classRow.id;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -374,16 +384,37 @@ function App() {
         teacher_id: user.id,
         teacher_full_name: teacherData?.full_name || 'مدير المدرسة',
         teacher_url_avatar: teacherData?.avatar_url || '',
+        external_link: newAssignment.external_link.trim() || null,
+        attachment_path: newAssignment.attachment_path,
+        attachment_name: newAssignment.attachment_name,
+        attachment_mime_type: newAssignment.attachment_mime_type,
       };
 
       if (!assignmentPayload.title) {
         throw new Error('يرجى إدخال عنوان المهمة.');
       }
 
-      await ensureClassWriteSession(
+      const targetClassId = await ensureClassWriteSession(
         assignmentPayload.class_level,
         assignmentPayload.subclass
       );
+
+      if (assignmentPayload.external_link && !/^https?:\/\//i.test(assignmentPayload.external_link)) {
+        throw new Error('يجب أن يبدأ الرابط بـ https:// أو http://');
+      }
+
+      const assignmentId = editingAssignment?.id || crypto.randomUUID();
+      if (attachmentFile) {
+        const safeName = attachmentFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const attachmentPath = `${targetClassId}/${assignmentId}/${crypto.randomUUID()}-${safeName}`;
+        const { error: uploadError } = await supabase.storage
+          .from('assignment-files')
+          .upload(attachmentPath, attachmentFile, { upsert: false });
+        if (uploadError) throw uploadError;
+        assignmentPayload.attachment_path = attachmentPath;
+        assignmentPayload.attachment_name = attachmentFile.name;
+        assignmentPayload.attachment_mime_type = attachmentFile.type;
+      }
 
       if (editingAssignment) {
         // Update existing assignment
@@ -397,7 +428,7 @@ function App() {
         // Create new assignment
         const { error } = await supabase
           .from('assignments')
-          .insert([assignmentPayload]);
+          .insert([{ id: assignmentId, ...assignmentPayload }]);
 
         if (error) throw error;
       }
@@ -411,11 +442,16 @@ function App() {
         subclass: role === 'teacher' && subclass ? subclass.toUpperCase() : 'A',
         deadline: format(new Date(), 'yyyy-MM-dd'),
         note: '',
+        external_link: '',
+        attachment_path: null,
+        attachment_name: null,
+        attachment_mime_type: null,
         school: schoolTownData?.id,
         teacher_id: user?.id,
         teacher_full_name: teacherData?.full_name || 'Annalina',
         teacher_url_avatar: teacherData?.avatar_url || '',
       });
+      setAttachmentFile(null);
       fetchAssignments();
     } catch (error: any) {
       console.error('Error saving assignment:', error);
@@ -468,6 +504,10 @@ function App() {
       subclass: assignment.subclass,
       deadline: format(new Date(assignment.deadline), 'yyyy-MM-dd'),
       note: assignment.note,
+      external_link: assignment.external_link || '',
+      attachment_path: assignment.attachment_path,
+      attachment_name: assignment.attachment_name,
+      attachment_mime_type: assignment.attachment_mime_type,
       school: schoolTownData?.id,
       teacher_id: user?.id,
       teacher_full_name: teacherData?.full_name || 'Teacher',
@@ -978,6 +1018,16 @@ function App() {
                     className="w-full px-3 py-2 border rounded-lg"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">رابط خارجي</label>
+                  <input type="url" value={newAssignment.external_link} onChange={(e) => setNewAssignment({ ...newAssignment, external_link: e.target.value })} placeholder="https://example.com" className="w-full px-3 py-2 border rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">ورقة عمل أو صورة</label>
+                  <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)} className="w-full px-3 py-2 border rounded-lg" />
+                  <p className="mt-1 text-xs text-gray-500">PDF، JPG، PNG أو WebP · الحد الأقصى 10 MB</p>
+                  {newAssignment.attachment_name && !attachmentFile && <p className="mt-1 text-xs font-medium">المرفق الحالي: {newAssignment.attachment_name}</p>}
+                </div>
                 <div className="flex justify-end space-x-3 mt-6">
                   <button
                     type="button"
@@ -992,8 +1042,13 @@ function App() {
                         subclass: role === 'teacher' && subclass ? subclass.toUpperCase() : 'A',
                         deadline: format(new Date(), 'yyyy-MM-dd'),
                         note: '',
+                        external_link: '',
+                        attachment_path: null,
+                        attachment_name: null,
+                        attachment_mime_type: null,
                         teacher_id: user?.id,
                       }));
+                      setAttachmentFile(null);
                     }}
                     
                     className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
