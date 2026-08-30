@@ -18,19 +18,23 @@ html.dark body,
 html.dark .app-shell-page,
 html.dark .app-shell-page > div,
 html.dark .app-shell-page main {
-  background-color: #0f1115 !important;
+  background-color: #151922 !important;
   color: #f8fafc;
 }
 
 html.dark .bg-white {
-  background-color: #191c22 !important;
+  background-color: #202631 !important;
 }
 
 html.dark .bg-slate-50,
 html.dark .bg-gray-50,
 html.dark .bg-slate-100,
 html.dark .bg-gray-100 {
-  background-color: #252a33 !important;
+  background-color: #2b3340 !important;
+}
+
+html.dark [class*='bg-white/60'] {
+  background-color: #1b212b !important;
 }
 
 html.dark .text-slate-400,
@@ -40,7 +44,17 @@ html.dark .text-gray-400,
 html.dark .text-gray-500,
 html.dark .text-gray-600,
 html.dark .text-gray-700 {
-  color: #b7c0cc !important;
+  color: #d0d7e2 !important;
+}
+
+html.dark .text-slate-700,
+html.dark .text-slate-800,
+html.dark .text-slate-900,
+html.dark .text-slate-950,
+html.dark .text-gray-800,
+html.dark .text-gray-900,
+html.dark .text-black {
+  color: #f8fafc !important;
 }
 
 html.dark .border-slate-100,
@@ -53,38 +67,64 @@ html.dark .border-gray-300 {
 
 html.dark .bg-blue-50,
 html.dark .bg-blue-100 {
-  background-color: #172554 !important;
-  color: #dbeafe !important;
+  background-color: #35558f !important;
+  color: #f2f7ff !important;
 }
 
 html.dark .bg-violet-50,
 html.dark .bg-violet-100 {
-  background-color: #2e1065 !important;
-  color: #ede9fe !important;
+  background-color: #6947a5 !important;
+  color: #faf7ff !important;
 }
 
 html.dark .bg-amber-50,
 html.dark .bg-amber-100 {
-  background-color: #451a03 !important;
-  color: #fef3c7 !important;
+  background-color: #8a5c23 !important;
+  color: #fff9e8 !important;
 }
 
 html.dark .bg-teal-50,
 html.dark .bg-teal-100 {
-  background-color: #042f2e !important;
-  color: #ccfbf1 !important;
+  background-color: #28756d !important;
+  color: #effffc !important;
 }
 
 html.dark .bg-rose-50,
 html.dark .bg-rose-100 {
-  background-color: #4c0519 !important;
-  color: #ffe4e6 !important;
+  background-color: #943c59 !important;
+  color: #fff3f6 !important;
+}
+
+html.dark .border-blue-300 {
+  border-color: #7fb0ff !important;
+}
+
+html.dark .border-violet-300 {
+  border-color: #b79aff !important;
+}
+
+html.dark .border-amber-300 {
+  border-color: #f2bd57 !important;
+}
+
+html.dark .border-teal-300 {
+  border-color: #69d5ca !important;
+}
+
+html.dark .border-rose-300 {
+  border-color: #f28aa9 !important;
+}
+
+html.dark [class*='bg-white/70'],
+html.dark [class*='bg-white/80'] {
+  background-color: rgb(255 255 255 / 0.2) !important;
+  color: #ffffff !important;
 }
 
 html.dark input,
 html.dark select,
 html.dark textarea {
-  background-color: #191c22;
+  background-color: #202631;
   color: #f8fafc;
   border-color: #3b4350;
 }
