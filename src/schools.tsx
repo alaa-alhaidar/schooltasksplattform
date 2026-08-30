@@ -20,6 +20,7 @@ import {
   Megaphone,
   Paperclip,
   ExternalLink,
+  FileText,
   RefreshCw,
   School,
   X,
@@ -130,11 +131,11 @@ function WeeklyPlanCard({
         )}
         {item.attachment_path && (
           <span
-            className="inline-flex shrink-0 items-center justify-center rounded-full bg-white/70 p-1.5"
-            title="تحتوي المهمة على مرفق"
-            aria-label="تحتوي المهمة على مرفق"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-red-50 p-2 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700"
+            title="فتح تفاصيل المرفق"
+            aria-label="فتح تفاصيل المرفق"
           >
-            <Paperclip size={15} />
+            <FileText size={17} />
           </span>
         )}
       </div>
