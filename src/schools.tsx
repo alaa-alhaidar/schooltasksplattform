@@ -14,7 +14,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
-  Flag,
   Home,
   LogOut,
   Map,
@@ -93,11 +92,9 @@ const getErrorMessage = (error: unknown, fallback: string) =>
 function WeeklyPlanCard({
   item,
   onClick,
-  completed = false,
 }: {
   item: WeeklyPlanItem;
   onClick: () => void;
-  completed?: boolean;
 }) {
   const isAnnouncement = item.item_type === 'announcement';
   const dayColor = getDayColor(item.weekday);
@@ -135,12 +132,6 @@ function WeeklyPlanCard({
           التسليم {format(new Date(item.due_at), 'dd.MM.yyyy، HH:mm', { locale: arSA })}
         </div>
       )}
-      {completed && (
-        <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm">
-          <Flag size={14} fill="currentColor" />
-          منجزة
-        </span>
-      )}
       <span className="mt-3 block text-xs font-semibold opacity-60">عرض التفاصيل</span>
     </button>
   );
@@ -160,7 +151,6 @@ export default function Schools() {
   const [loadingPlan, setLoadingPlan] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<WeeklyPlanItem | null>(null);
-  const [completedAssignments, setCompletedAssignments] = useState<Set<string>>(new Set());
 
   const loadIdentity = useCallback(async () => {
     setLoadingProfile(true);
@@ -333,55 +323,6 @@ export default function Schools() {
   }, [loadWeek, plan?.id]);
 
   useEffect(() => {
-    if (!profile) return;
-    const loadCompletions = async () => {
-      const { data } = await supabase
-        .from('assignment_completions')
-        .select('assignment_id')
-        .eq('user_id', profile.id)
-        .eq('week_start', format(weekStart, 'yyyy-MM-dd'));
-      setCompletedAssignments(
-        new Set((data || []).map((row) => row.assignment_id as string))
-      );
-    };
-    loadCompletions();
-  }, [profile, weekStart]);
-
-  const toggleAssignmentCompletion = async (assignmentId: string) => {
-    if (!profile) return;
-    const completed = completedAssignments.has(assignmentId);
-    setCompletedAssignments((current) => {
-      const next = new Set(current);
-      if (completed) next.delete(assignmentId);
-      else next.add(assignmentId);
-      return next;
-    });
-
-    const { error: completionError } = completed
-      ? await supabase
-          .from('assignment_completions')
-          .delete()
-          .eq('assignment_id', assignmentId)
-          .eq('user_id', profile.id)
-          .eq('week_start', format(weekStart, 'yyyy-MM-dd'))
-      : await supabase.from('assignment_completions').insert({
-          assignment_id: assignmentId,
-          user_id: profile.id,
-          week_start: format(weekStart, 'yyyy-MM-dd'),
-        });
-
-    if (completionError) {
-      setCompletedAssignments((current) => {
-        const next = new Set(current);
-        if (completed) next.add(assignmentId);
-        else next.delete(assignmentId);
-        return next;
-      });
-      setError('تعذر حفظ حالة المهمة.');
-    }
-  };
-
-  useEffect(() => {
     if (!selectedItem) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setSelectedItem(null);
@@ -549,10 +490,6 @@ export default function Schools() {
                         <WeeklyPlanCard
                           key={item.id}
                           item={item}
-                          completed={Boolean(
-                            item.assignment_id &&
-                              completedAssignments.has(item.assignment_id)
-                          )}
                           onClick={() => setSelectedItem(item)}
                         />
                       ))}
@@ -569,10 +506,6 @@ export default function Schools() {
                       <WeeklyPlanCard
                         key={item.id}
                         item={item}
-                        completed={Boolean(
-                          item.assignment_id &&
-                            completedAssignments.has(item.assignment_id)
-                        )}
                         onClick={() => setSelectedItem(item)}
                       />
                     ))}
@@ -648,22 +581,6 @@ export default function Schools() {
                 </dd>
               </div>
             </dl>
-            {selectedItem.assignment_id && (
-              <button
-                type="button"
-                onClick={() => toggleAssignmentCompletion(selectedItem.assignment_id!)}
-                className={`mt-6 w-full rounded-xl px-5 py-3 font-semibold transition ${
-                  completedAssignments.has(selectedItem.assignment_id)
-                    ? 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                    : 'bg-black text-white hover:bg-slate-800'
-                }`}
-              >
-                {completedAssignments.has(selectedItem.assignment_id)
-                  ? 'تم إنجاز المهمة'
-                  : 'تحديد كمهمة منجزة'}
-              </button>
-            )}
-
             <button
               type="button"
               onClick={() => setSelectedItem(null)}
