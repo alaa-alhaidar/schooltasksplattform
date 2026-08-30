@@ -28,6 +28,8 @@ export interface AppIdentity {
   classLevel: number | null;
   subclass: string | null;
   loading: boolean;
+  language: 'ar' | 'ku';
+  setLanguage: (language: 'ar' | 'ku') => void;
 }
 
 const emptyIdentity: AppIdentity = {
@@ -42,6 +44,8 @@ const emptyIdentity: AppIdentity = {
   classLevel: null,
   subclass: null,
   loading: true,
+  language: 'ar',
+  setLanguage: () => undefined,
 };
 
 const AppIdentityContext = createContext<AppIdentity>(emptyIdentity);
@@ -57,6 +61,15 @@ export default function AppLayout() {
   const [lastSync, setLastSync] = useState<string | null>(() =>
     window.localStorage.getItem(LAST_SYNC_KEY)
   );
+  const [language, setLanguage] = useState<'ar' | 'ku'>(() =>
+    window.localStorage.getItem('schooltasks:language') === 'ku' ? 'ku' : 'ar'
+  );
+
+  useEffect(() => {
+    window.localStorage.setItem('schooltasks:language', language);
+    document.documentElement.lang = language === 'ku' ? 'ku' : 'ar';
+    document.documentElement.dir = language === 'ku' ? 'ltr' : 'rtl';
+  }, [language]);
 
   useEffect(() => {
     const updateOnlineStatus = () => setOnline(navigator.onLine);
@@ -200,17 +213,17 @@ export default function AppLayout() {
 
   const navigation = useMemo(
     () => [
-      { path: homePath, label: 'الرئيسية', icon: Home },
+      { path: homePath, label: language === 'ku' ? 'Destpêk' : 'الرئيسية', icon: Home },
       ...(isFamilyView
-        ? [{ path: '/schools', label: 'الخطة الأسبوعية', icon: BookOpen }]
-        : [{ path: '/today', label: 'اليوم', icon: Sun }]),
-      { path: '/Schedule', label: 'الجدول الدراسي', icon: CalendarDays },
-      { path: notificationsPath, label: 'الإشعارات', icon: Bell },
+        ? [{ path: '/schools', label: language === 'ku' ? 'Plana heftane' : 'الخطة الأسبوعية', icon: BookOpen }]
+        : [{ path: '/today', label: language === 'ku' ? 'Îro' : 'اليوم', icon: Sun }]),
+      { path: '/Schedule', label: language === 'ku' ? 'Bernameya dersan' : 'الجدول الدراسي', icon: CalendarDays },
+      { path: notificationsPath, label: language === 'ku' ? 'Agahdarî' : 'الإشعارات', icon: Bell },
       ...(identity.role === 'super_admin'
-        ? [{ path: '/audit-log', label: 'سجل التغييرات', icon: ClipboardList }]
+        ? [{ path: '/audit-log', label: language === 'ku' ? 'Tomara guhertinan' : 'سجل التغييرات', icon: ClipboardList }]
         : []),
     ],
-    [homePath, identity.role, isFamilyView, notificationsPath]
+    [homePath, identity.role, isFamilyView, language, notificationsPath]
   );
 
   useEffect(() => {
@@ -252,13 +265,13 @@ export default function AppLayout() {
   }
 
   return (
-    <AppIdentityContext.Provider value={identity}>
+    <AppIdentityContext.Provider value={{ ...identity, language, setLanguage }}>
       <div className="min-h-screen bg-[#faf8f8]">
         <aside className="fixed inset-y-0 right-0 z-50 flex w-20 flex-col items-center border-l border-slate-100 bg-white py-8">
           <button
             onClick={() => navigate(homePath)}
             className="mb-10 flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white"
-            title="الرئيسية"
+            title={language === 'ku' ? 'Destpêk' : 'الرئيسية'}
           >
             <BookOpen size={24} />
           </button>
@@ -291,8 +304,8 @@ export default function AppLayout() {
                 ? 'bg-slate-100 text-black'
                 : 'text-slate-400 hover:bg-slate-100 hover:text-black'
             }`}
-            title="الإعدادات"
-            aria-label="الإعدادات"
+            title={language === 'ku' ? 'Mîheng' : 'الإعدادات'}
+            aria-label={language === 'ku' ? 'Mîheng' : 'الإعدادات'}
           >
             <Settings size={23} />
           </button>
@@ -300,8 +313,8 @@ export default function AppLayout() {
           <button
             onClick={handleSignOut}
             className="rounded-2xl p-3 text-slate-400 hover:bg-red-50 hover:text-red-600"
-            title="تسجيل الخروج"
-            aria-label="تسجيل الخروج"
+            title={language === 'ku' ? 'Derkeve' : 'تسجيل الخروج'}
+            aria-label={language === 'ku' ? 'Derkeve' : 'تسجيل الخروج'}
           >
             <LogOut size={23} />
           </button>
@@ -314,8 +327,8 @@ export default function AppLayout() {
           <div className="fixed bottom-4 left-4 z-[80] flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-medium text-white shadow-lg">
             <WifiOff size={15} />
             <span>
-              دون اتصال
-              {lastSync && ` · آخر تحديث ${new Date(lastSync).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' })}`}
+              {language === 'ku' ? 'Bê înternet' : 'دون اتصال'}
+              {lastSync && ` · ${language === 'ku' ? 'Nûkirina dawî' : 'آخر تحديث'} ${new Date(lastSync).toLocaleTimeString(language === 'ku' ? 'ku-TR' : 'ar', { hour: '2-digit', minute: '2-digit' })}`}
             </span>
           </div>
         )}

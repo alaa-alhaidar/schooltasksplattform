@@ -12,7 +12,6 @@ import {
   X,
 } from 'lucide-react';
 import { format, startOfDay } from 'date-fns';
-import { arSA } from 'date-fns/locale';
 import { supabase } from '../lib/supabase';
 import { useAppIdentity } from '../layout/AppLayout';
 import { markAppSynced } from '../lib/syncStatus';
@@ -48,11 +47,33 @@ const subjectLabels: Record<string, string> = {
   'Computer Science': 'الحاسوب', 'Social Studies': 'الدراسات الاجتماعية',
   'Club Activities': 'الأنشطة',
 };
+const subjectLabelsKu: Record<string, string> = {
+  Assignments: 'Peywir', Mathematics: 'Matematîk', German: 'Almanî', English: 'Îngilîzî',
+  Physic: 'Zanist', Chemie: 'Kîmya', Tests: 'Îmtîhan', Science: 'Zanist', History: 'Dîrok',
+  'Language Arts': 'Ziman', 'Physical Education': 'Werziş', Art: 'Huner', Music: 'Muzîk',
+  'Computer Science': 'Kompîtur', 'Social Studies': 'Civaknasî', 'Club Activities': 'Çalakî',
+};
 
 const formatTime = (value: string) => value.slice(0, 5);
+const getSubjectLabel = (subject: string, ku: boolean) =>
+  (ku ? subjectLabelsKu : subjectLabels)[subject] || subject;
+const formatPortalDate = (date: Date, ku: boolean, long = true) =>
+  new Intl.DateTimeFormat(ku ? 'ku-TR' : 'ar', long
+    ? { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }
+    : { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
 
 export default function Today() {
   const identity = useAppIdentity();
+  const ku = identity.language === 'ku';
+  const text = {
+    today: ku ? 'Îro' : 'اليوم', refresh: ku ? 'Nû bike' : 'تحديث', lessons: ku ? 'Dersên îro' : 'حصص اليوم',
+    tasks: ku ? 'Peywirên îro' : 'مهام اليوم', noLessons: ku ? 'Îro ders tune.' : 'لا توجد حصص مسجلة لهذا اليوم.',
+    noTasks: ku ? 'Îro peywirek tune.' : 'لا توجد مهام مستحقة اليوم.', due: ku ? 'Dema teslîmkirinê' : 'موعد التسليم',
+    description: ku ? 'Danasîn' : 'الوصف', teacher: ku ? 'Mamoste' : 'المعلم', close: ku ? 'Bigire' : 'إغلاق',
+    attachmentLoading: ku ? 'Pel tê amadekirin…' : 'جارٍ تجهيز المرفق…', external: ku ? 'Girêdana derveyî veke' : 'فتح الرابط الخارجي',
+    details: ku ? 'Ji bo hûrguliyan bitikîne' : 'اضغط لعرض التفاصيل', link: ku ? 'Girêdanê veke' : 'فتح الرابط',
+    classLabel: ku ? 'Pol' : 'الصف', accountMissing: ku ? 'Ev hesab bi polekê ve nehat girêdan.' : 'لم يتم ربط هذا الحساب بصف دراسي.',
+  };
   const [schedule, setSchedule] = useState<ScheduleEntry[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +86,7 @@ export default function Today() {
   const loadToday = useCallback(async () => {
     if (!identity.classId || !identity.schoolId || !identity.classLevel || !identity.subclass) {
       setLoading(false);
-      setError('لم يتم ربط هذا الحساب بصف دراسي.');
+      setError(text.accountMissing);
       return;
     }
 
@@ -117,7 +138,7 @@ export default function Today() {
     } finally {
       setLoading(false);
     }
-  }, [identity.classId, identity.classLevel, identity.schoolId, identity.subclass, today, todayName]);
+  }, [identity.classId, identity.classLevel, identity.schoolId, identity.subclass, text.accountMissing, today, todayName]);
 
   useEffect(() => { void loadToday(); }, [loadToday]);
 
@@ -139,39 +160,39 @@ export default function Today() {
   }
 
   return (
-    <main dir="rtl" className="min-h-screen bg-[#faf8f8] px-5 py-8 text-slate-950 dark:bg-[#11151b] dark:text-slate-100 md:px-10 lg:px-16">
+    <main dir={ku ? 'ltr' : 'rtl'} className="min-h-screen bg-[#faf8f8] px-5 py-8 text-slate-950 dark:bg-[#11151b] dark:text-slate-100 md:px-10 lg:px-16">
       <div className="mx-auto max-w-7xl">
         <header className="flex flex-col justify-between gap-5 border-b border-slate-200 pb-8 dark:border-slate-700 md:flex-row md:items-end">
           <div>
-            <p className="flex items-center gap-2 text-sm font-bold text-slate-500 dark:text-slate-400"><School size={17} /> {identity.schoolFullName || identity.schoolName} · الصف {identity.classLevel} {identity.subclass?.toUpperCase()}</p>
-            <h1 className="mt-3 text-4xl font-black">اليوم</h1>
-            <p className="mt-2 text-lg text-slate-500 dark:text-slate-300">{format(today, 'EEEE، d MMMM yyyy', { locale: arSA })}</p>
+            <p className="flex items-center gap-2 text-sm font-bold text-slate-500 dark:text-slate-400"><School size={17} /> {identity.schoolFullName || identity.schoolName} · {text.classLabel} {identity.classLevel} {identity.subclass?.toUpperCase()}</p>
+            <h1 className="mt-3 text-4xl font-black">{text.today}</h1>
+            <p className="mt-2 text-lg text-slate-500 dark:text-slate-300">{formatPortalDate(today, ku)}</p>
           </div>
-          <button onClick={() => void loadToday()} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-black px-5 py-3 font-bold text-white dark:bg-white dark:text-slate-950"><RefreshCw size={18} /> تحديث</button>
+          <button onClick={() => void loadToday()} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-black px-5 py-3 font-bold text-white dark:bg-white dark:text-slate-950"><RefreshCw size={18} /> {text.refresh}</button>
         </header>
 
         {error && <div className="mt-6 rounded-2xl bg-amber-50 p-4 text-amber-900 dark:bg-amber-950 dark:text-amber-100">{error}</div>}
 
         <section className="mt-8 grid items-start gap-6 lg:grid-cols-2">
           <div className="today-section-card rounded-3xl bg-white p-6 shadow-sm dark:bg-[#1b222c]">
-            <h2 className="flex items-center gap-2 text-xl font-black"><CalendarClock size={22} /> حصص اليوم</h2>
+            <h2 className="flex items-center gap-2 text-xl font-black"><CalendarClock size={22} /> {text.lessons}</h2>
             <div className="mt-5 space-y-3">
               {schedule.map((item) => (
                 <article key={item.id} className="today-lesson-card flex items-center gap-4 rounded-2xl bg-slate-50 p-4 text-slate-900 dark:bg-[#252d38] dark:text-slate-100">
                   <div className="min-w-24 text-center font-black">{formatTime(item.start_time)}–{formatTime(item.end_time)}</div>
                   <div className="h-10 w-px bg-slate-200 dark:bg-slate-600" />
-                  <div><h3 className="font-bold">{subjectLabels[item.subject] || item.subject}</h3>{(item.room || item.teacher) && <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{[item.teacher, item.room].filter(Boolean).join(' · ')}</p>}</div>
+                  <div><h3 className="font-bold">{getSubjectLabel(item.subject, ku)}</h3>{(item.room || item.teacher) && <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{[item.teacher, item.room].filter(Boolean).join(' · ')}</p>}</div>
                 </article>
               ))}
-              {schedule.length === 0 && <Empty text="لا توجد حصص مسجلة لهذا اليوم." />}
+              {schedule.length === 0 && <Empty text={text.noLessons} />}
             </div>
           </div>
 
           <div className="today-section-card rounded-3xl bg-white p-6 shadow-sm dark:bg-[#1b222c]">
-            <h2 className="flex items-center gap-2 text-xl font-black"><BookOpen size={22} /> مهام اليوم <Count value={assignments.length} /></h2>
+            <h2 className="flex items-center gap-2 text-xl font-black"><BookOpen size={22} /> {text.tasks} <Count value={assignments.length} /></h2>
             <div className="mt-5 space-y-3">
-              {assignments.map((item) => <AssignmentRow key={item.id} item={item} onClick={() => setSelectedAssignment(item)} />)}
-              {assignments.length === 0 && <Empty text="لا توجد مهام مستحقة اليوم." />}
+              {assignments.map((item) => <AssignmentRow key={item.id} item={item} ku={ku} text={text} onClick={() => setSelectedAssignment(item)} />)}
+              {assignments.length === 0 && <Empty text={text.noTasks} />}
             </div>
           </div>
         </section>
@@ -180,17 +201,17 @@ export default function Today() {
           <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 p-4" onMouseDown={() => setSelectedAssignment(null)}>
             <section className="w-full max-w-lg rounded-3xl bg-white p-7 text-slate-950 shadow-2xl dark:bg-[#202833] dark:text-slate-100" onMouseDown={(event) => event.stopPropagation()}>
               <div className="flex items-start justify-between gap-4">
-                <div><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-100">{subjectLabels[selectedAssignment.subject] || selectedAssignment.subject}</span><h2 className="mt-4 text-2xl font-black">{selectedAssignment.title}</h2></div>
-                <button onClick={() => setSelectedAssignment(null)} className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700" aria-label="إغلاق"><X size={22} /></button>
+                <div><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-100">{getSubjectLabel(selectedAssignment.subject, ku)}</span><h2 className="mt-4 text-2xl font-black">{selectedAssignment.title}</h2></div>
+                <button onClick={() => setSelectedAssignment(null)} className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={text.close}><X size={22} /></button>
               </div>
               <div className="mt-6 space-y-5">
-                <div><p className="text-xs font-bold text-slate-400">موعد التسليم</p><p className="mt-2 flex items-center gap-2 font-bold"><Clock3 size={17} /> {format(new Date(selectedAssignment.deadline), 'EEEE، d MMMM yyyy', { locale: arSA })}</p></div>
-                {selectedAssignment.note && <div><p className="text-xs font-bold text-slate-400">الوصف</p><p className="mt-2 whitespace-pre-wrap leading-7">{selectedAssignment.note}</p></div>}
-                {selectedAssignment.teacher_full_name && <div><p className="text-xs font-bold text-slate-400">المعلم</p><p className="mt-2 font-semibold">{selectedAssignment.teacher_full_name}</p></div>}
-                {selectedAssignment.attachment_path && (attachmentUrl ? <a href={attachmentUrl} target="_blank" rel="noreferrer" className="flex w-full items-center justify-between gap-3 rounded-2xl bg-red-50 p-4 font-bold text-red-700 dark:bg-red-950/50 dark:text-red-200"><span className="min-w-0 break-all">{selectedAssignment.attachment_name || 'فتح المرفق'}</span><Download className="shrink-0" size={19} /></a> : <div className="rounded-2xl bg-slate-100 p-4 text-center text-sm text-slate-500 dark:bg-slate-700 dark:text-slate-300">جارٍ تجهيز المرفق…</div>)}
-                {selectedAssignment.external_link && <a href={selectedAssignment.external_link} target="_blank" rel="noreferrer" className="flex w-full items-center justify-between rounded-2xl bg-emerald-50 p-4 font-bold text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200"><span>فتح الرابط الخارجي</span><ExternalLink size={19} /></a>}
+                <div><p className="text-xs font-bold text-slate-400">{text.due}</p><p className="mt-2 flex items-center gap-2 font-bold"><Clock3 size={17} /> {formatPortalDate(new Date(selectedAssignment.deadline), ku)}</p></div>
+                {selectedAssignment.note && <div><p className="text-xs font-bold text-slate-400">{text.description}</p><p className="mt-2 whitespace-pre-wrap leading-7">{selectedAssignment.note}</p></div>}
+                {selectedAssignment.teacher_full_name && <div><p className="text-xs font-bold text-slate-400">{text.teacher}</p><p className="mt-2 font-semibold">{selectedAssignment.teacher_full_name}</p></div>}
+                {selectedAssignment.attachment_path && (attachmentUrl ? <a href={attachmentUrl} target="_blank" rel="noreferrer" className="flex w-full items-center justify-between gap-3 rounded-2xl bg-red-50 p-4 font-bold text-red-700 dark:bg-red-950/50 dark:text-red-200"><span className="min-w-0 break-all">{selectedAssignment.attachment_name || (ku ? 'Pel veke' : 'فتح المرفق')}</span><Download className="shrink-0" size={19} /></a> : <div className="rounded-2xl bg-slate-100 p-4 text-center text-sm text-slate-500 dark:bg-slate-700 dark:text-slate-300">{text.attachmentLoading}</div>)}
+                {selectedAssignment.external_link && <a href={selectedAssignment.external_link} target="_blank" rel="noreferrer" className="flex w-full items-center justify-between rounded-2xl bg-emerald-50 p-4 font-bold text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200"><span>{text.external}</span><ExternalLink size={19} /></a>}
               </div>
-              <button onClick={() => setSelectedAssignment(null)} className="mt-7 w-full rounded-2xl bg-black py-3.5 font-bold text-white dark:bg-white dark:text-black">إغلاق</button>
+              <button onClick={() => setSelectedAssignment(null)} className="mt-7 w-full rounded-2xl bg-black py-3.5 font-bold text-white dark:bg-white dark:text-black">{text.close}</button>
             </section>
           </div>
         )}
@@ -207,6 +228,14 @@ function Empty({ text }: { text: string }) {
   return <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-center text-sm text-slate-400 dark:border-slate-700">{text}</div>;
 }
 
-function AssignmentRow({ item, onClick }: { item: Assignment; onClick: () => void }) {
-  return <article role="button" tabIndex={0} onClick={onClick} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onClick(); }} className="today-task-card w-full cursor-pointer rounded-2xl bg-emerald-100 p-5 text-right text-emerald-950 transition hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"><div className="flex items-start justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-lg font-black">{item.title}</h3><span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-bold">{subjectLabels[item.subject] || item.subject}</span></div></div>{(item.attachment_path || item.external_link) && <FileText className="today-task-file shrink-0 text-red-500" size={20} />}</div>{item.note && <p className="today-task-note mt-3 text-sm font-medium leading-6 text-emerald-900/75">{item.note}</p>}<p className="today-task-note mt-4 flex items-center gap-1.5 text-xs font-bold text-emerald-900/70"><Clock3 size={14} /> التسليم {format(new Date(item.deadline), 'dd.MM.yyyy', { locale: arSA })}</p>{(item.attachment_path || item.external_link) && <div className="mt-4 flex flex-wrap gap-2">{item.attachment_path && <button type="button" onClick={(event) => { event.stopPropagation(); onClick(); }} className="today-task-attachment inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-red-600 transition hover:bg-white hover:underline"><Paperclip className="shrink-0" size={13} /><span className="truncate">{item.attachment_name || 'ورقة عمل'}</span></button>}{item.external_link && <a href={item.external_link} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()} className="today-task-link inline-flex cursor-pointer items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-emerald-800 transition hover:bg-white hover:underline"><ExternalLink size={13} /> فتح الرابط</a>}</div>}<span className="today-task-note mt-4 block text-xs font-bold text-emerald-900/60 underline-offset-4 group-hover:underline">اضغط لعرض التفاصيل</span></article>;
+function AssignmentRow({ item, onClick, ku, text }: { item: Assignment; onClick: () => void; ku: boolean; text: Record<string, string> }) {
+  return (
+    <article role="button" tabIndex={0} onClick={onClick} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onClick(); }} className="today-task-card group w-full cursor-pointer rounded-2xl bg-emerald-100 p-5 text-start text-emerald-950 transition hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+      <div className="flex items-start justify-between gap-3"><div className="flex flex-wrap items-center gap-2"><h3 className="text-lg font-black">{item.title}</h3><span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-bold">{getSubjectLabel(item.subject, ku)}</span></div>{(item.attachment_path || item.external_link) && <FileText className="today-task-file shrink-0 text-red-500" size={20} />}</div>
+      {item.note && <p className="today-task-note mt-3 text-sm font-medium leading-6 text-emerald-900/75">{item.note}</p>}
+      <p className="today-task-note mt-4 flex items-center gap-1.5 text-xs font-bold text-emerald-900/70"><Clock3 size={14} /> {text.due} {formatPortalDate(new Date(item.deadline), ku, false)}</p>
+      {(item.attachment_path || item.external_link) && <div className="mt-4 flex flex-wrap gap-2">{item.attachment_path && <button type="button" onClick={(event) => { event.stopPropagation(); onClick(); }} className="today-task-attachment inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-red-600 transition hover:bg-white hover:underline"><Paperclip className="shrink-0" size={13} /><span className="truncate">{item.attachment_name || (ku ? 'Pelê karê' : 'ورقة عمل')}</span></button>}{item.external_link && <a href={item.external_link} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()} className="today-task-link inline-flex cursor-pointer items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-emerald-800 transition hover:bg-white hover:underline"><ExternalLink size={13} /> {text.link}</a>}</div>}
+      <span className="today-task-note mt-4 block text-xs font-bold text-emerald-900/60 underline-offset-4 group-hover:underline">{text.details}</span>
+    </article>
+  );
 }
