@@ -620,15 +620,19 @@ export default function Schools() {
               </div>
             </dl>
             {(selectedItem.attachment_path || selectedItem.external_link) && (
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className={`mt-6 grid min-w-0 gap-3 ${selectedItem.attachment_path && selectedItem.external_link ? 'sm:grid-cols-2' : 'grid-cols-1'}`}>
                 {selectedItem.attachment_path && (
                   attachmentUrl ? (
-                    <a href={attachmentUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-3 font-semibold hover:bg-slate-200">
-                      <Paperclip size={18} />{selectedItem.attachment_name || 'فتح المرفق'}
+                    <a href={attachmentUrl} target="_blank" rel="noreferrer" className="flex min-w-0 max-w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-slate-100 px-4 py-3 font-semibold hover:bg-slate-200">
+                      <Paperclip className="shrink-0" size={18} />
+                      <span className="min-w-0 break-all text-center leading-5">
+                        {selectedItem.attachment_name || 'فتح المرفق'}
+                      </span>
                     </a>
                   ) : (
-                    <div className={`flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-3 font-semibold ${attachmentError ? 'text-red-700' : 'animate-pulse opacity-60'}`}>
-                      <Paperclip size={18} />{attachmentError || 'جارٍ تجهيز المرفق...'}
+                    <div className={`flex min-w-0 max-w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-slate-100 px-4 py-3 font-semibold ${attachmentError ? 'text-red-700' : 'animate-pulse opacity-60'}`}>
+                      <Paperclip className="shrink-0" size={18} />
+                      <span className="min-w-0 break-words text-center">{attachmentError || 'جارٍ تجهيز المرفق...'}</span>
                     </div>
                   )
                 )}
