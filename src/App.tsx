@@ -1345,12 +1345,14 @@ function App() {
                       </div>
                     </div>
                     {/* Edit and Delete Buttons */}
-                    <div className="flex justify-end space-x-2 mt-4">
+                    <div className="mt-5 flex flex-wrap justify-end gap-2 border-t border-black/5 pt-4">
                       {assignment.teacher_id === user.id && (
                         <>
                           <button
                             onClick={() => handleEditAssignment(assignment)}
-                            className="px-3 py-1 bg-green-300 text-white rounded-lg hover:bg-green-600"
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-300 bg-emerald-100 text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            title="تعديل المهمة"
+                            aria-label="تعديل المهمة"
                           >
                             <Pencil className="h-5 w-5" />
                           </button>
@@ -1358,7 +1360,9 @@ function App() {
                             onClick={() =>
                               handleDeleteAssignment(assignment.id)
                             }
-                            className="px-3 py-1 bg-red-300 text-white rounded-lg hover:bg-red-600"
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-red-300 bg-red-100 text-red-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            title="حذف المهمة"
+                            aria-label="حذف المهمة"
                           >
                             <Trash2 className="h-5 w-5" />
                           </button>
@@ -1366,13 +1370,17 @@ function App() {
                       )}
                       <button
                         onClick={() => setSelectedAssignment(assignment)}
-                        className="px-3 py-1 bg-blue-300 text-white rounded-lg hover:bg-blue-600"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-blue-300 bg-blue-100 text-blue-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        title="عرض التفاصيل"
+                        aria-label="عرض التفاصيل"
                       >
                         <Info className="h-5 w-5" />
                       </button>
                       <button
                         onClick={() => setGetInfoSelectedAssignment(assignment)}
-                        className="px-3 py-1 bg-purple-300 text-white rounded-lg hover:bg-purple-600"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-violet-300 bg-violet-100 text-violet-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-violet-200 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                        title="معلومات المهمة"
+                        aria-label="معلومات المهمة"
                       >
                         <Square className="h-5 w-5" />
                       </button>

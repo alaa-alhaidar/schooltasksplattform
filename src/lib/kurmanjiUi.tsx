@@ -10,6 +10,8 @@ const translations: Record<string, string> = {
   'PDF، JPG، PNG أو WebP · الحد الأقصى 10 MB': 'PDF, JPG, PNG an WebP · herî zêde 10 MB',
   'النشاط': 'Çalakî', 'السنة': 'Sal', 'الشهر': 'Meh', 'الأسبوع': 'Hefte', 'أحدث المهام': 'Peywirên herî nû',
   'التسليم:': 'Teslîmkirin:', 'المعلم:': 'Mamoste:', 'تسجيل الدخول': 'Têketin',
+  'تعديل المهمة': 'Peywirê biguherîne', 'حذف المهمة': 'Peywirê jê bibe',
+  'معلومات المهمة': 'Agahiyên peywirê',
   'الخطة الأسبوعية': 'Plana heftane', 'الجدول الدراسي': 'Bernameya dersan', 'الإشعارات': 'Agahdarî',
   'إشعارات مهمة': 'Agahdariyên girîng', 'المهام حسب أيام الأسبوع': 'Peywir li gor rojên hefteyê',
   'لا توجد مهام': 'Peywir tune', 'مهام أخرى': 'Peywirên din', 'عرض التفاصيل': 'Hûrguliyan bibîne',
