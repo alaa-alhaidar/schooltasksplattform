@@ -730,9 +730,9 @@ function WeeklySchedule() {
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="overflow-x-auto rounded-xl bg-white shadow-sm">
               {/* Time headers */}
-              <div className="grid grid-cols-6 border-b">
+              <div className="grid min-w-[760px] grid-cols-6 border-b">
                 <div className="p-4 font-semibold text-gray-500 border-r">
                   الوقت / اليوم
                 </div>
@@ -750,7 +750,7 @@ function WeeklySchedule() {
               {timeSlots.map((timeSlot) => (
                 <div
                   key={timeSlot}
-                  className="grid grid-cols-6 border-b last:border-b-0"
+                  className="grid min-w-[760px] grid-cols-6 border-b last:border-b-0"
                 >
                   <div className="p-4 font-medium text-gray-500 border-r flex items-center">
                     <Clock className="inline-block mr-2" size={16} />

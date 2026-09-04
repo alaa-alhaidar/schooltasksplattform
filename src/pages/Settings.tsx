@@ -51,17 +51,17 @@ export default function Settings() {
       </header>
 
       <section className="mx-auto max-w-3xl space-y-4">
-        <div className="flex items-center justify-between gap-5 rounded-2xl bg-white p-5 shadow-sm">
+        <div className="flex flex-col items-stretch justify-between gap-5 rounded-2xl bg-white p-5 shadow-sm sm:flex-row sm:items-center">
           <div className="flex items-center gap-4">
             <span className="rounded-xl bg-slate-100 p-3"><Languages size={22} /></span>
             <div><h2 className="font-bold">{ku ? 'Ziman' : 'اللغة'}</h2><p className="mt-1 text-sm text-slate-500">{ku ? 'Zimanê portalê hilbijêre' : 'اختر لغة واجهة المنصة'}</p></div>
           </div>
-          <div className="flex rounded-xl bg-slate-100 p-1">
+          <div className="grid w-full grid-cols-2 rounded-xl bg-slate-100 p-1 sm:w-auto">
             <button onClick={() => setLanguage('ar')} className={`rounded-lg px-4 py-2 text-sm font-bold ${language === 'ar' ? 'bg-black text-white' : ''}`}>العربية</button>
             <button onClick={() => setLanguage('ku')} className={`rounded-lg px-4 py-2 text-sm font-bold ${language === 'ku' ? 'bg-black text-white' : ''}`}>Kurdî</button>
           </div>
         </div>
-        <div className="flex items-center justify-between gap-5 rounded-2xl bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm">
           <div className="flex items-center gap-4">
             <span className="rounded-xl bg-slate-100 p-3">
               {darkMode ? <Moon size={22} /> : <Sun size={22} />}
@@ -82,7 +82,7 @@ export default function Settings() {
           </button>
         </div>
 
-        <div className="flex items-center justify-between gap-5 rounded-2xl bg-white p-5 shadow-sm">
+        <div className="flex flex-col items-stretch justify-between gap-5 rounded-2xl bg-white p-5 shadow-sm sm:flex-row sm:items-center">
           <div className="flex items-center gap-4">
             <span className="rounded-xl bg-slate-100 p-3"><BellRing size={22} /></span>
             <div>
@@ -94,13 +94,13 @@ export default function Settings() {
             type="button"
             onClick={enableNotifications}
             disabled={notificationPermission === 'granted'}
-            className="rounded-full bg-black px-4 py-2.5 text-sm font-medium text-white disabled:bg-emerald-600"
+            className="self-start rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white disabled:bg-emerald-600 sm:self-auto"
           >
             {notificationPermission === 'granted' ? (ku ? 'Çalak e' : 'مفعّلة') : (ku ? 'Çalak bike' : 'تفعيل')}
           </button>
         </div>
 
-        <div className="flex items-center justify-between gap-5 rounded-2xl bg-white p-5 shadow-sm">
+        <div className="flex flex-col items-stretch justify-between gap-5 rounded-2xl bg-white p-5 shadow-sm sm:flex-row sm:items-center">
           <div className="flex items-center gap-4">
             <span className="rounded-xl bg-slate-100 p-3"><Database size={22} /></span>
             <div>

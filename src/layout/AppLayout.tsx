@@ -268,23 +268,23 @@ export default function AppLayout() {
   return (
     <AppIdentityContext.Provider value={{ ...identity, language, setLanguage }}>
       <div className="min-h-screen bg-[#faf8f8]">
-        <aside className="fixed inset-y-0 right-0 z-50 flex w-20 flex-col items-center border-l border-slate-100 bg-white py-8">
+        <aside className="fixed inset-x-0 bottom-0 z-50 flex h-20 w-full flex-row items-center border-t border-slate-100 bg-white px-3 md:inset-x-auto md:inset-y-0 md:right-0 md:h-auto md:w-20 md:flex-col md:border-l md:border-t-0 md:px-0 md:py-8">
           <button
             onClick={() => navigate(homePath)}
-            className="mb-10 flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white"
+            className="hidden h-12 w-12 items-center justify-center rounded-2xl bg-black text-white md:mb-10 md:flex"
             title={language === 'ku' ? 'Destpêk' : 'الرئيسية'}
           >
             <BookOpen size={24} />
           </button>
 
-          <nav className="flex flex-1 flex-col items-center gap-5">
+          <nav className="flex flex-1 flex-row items-center justify-around gap-1 md:flex-col md:justify-start md:gap-5">
             {navigation.map(({ path, label, icon: Icon }) => {
               const active = location.pathname.toLowerCase() === path.toLowerCase();
               return (
                 <button
                   key={path}
                   onClick={() => navigate(path)}
-                  className={`rounded-2xl p-3 transition-colors ${
+                  className={`rounded-2xl p-2.5 transition-colors sm:p-3 ${
                     active
                       ? 'bg-slate-100 text-black'
                       : 'text-slate-400 hover:bg-slate-100 hover:text-black'
@@ -300,7 +300,7 @@ export default function AppLayout() {
 
           <button
             onClick={() => navigate('/settings')}
-            className={`mb-3 rounded-2xl p-3 transition-colors ${
+            className={`rounded-2xl p-2.5 transition-colors sm:p-3 md:mb-3 ${
               location.pathname === '/settings'
                 ? 'bg-slate-100 text-black'
                 : 'text-slate-400 hover:bg-slate-100 hover:text-black'
@@ -313,7 +313,7 @@ export default function AppLayout() {
 
           <button
             onClick={handleSignOut}
-            className="rounded-2xl p-3 text-slate-400 hover:bg-red-50 hover:text-red-600"
+            className="rounded-2xl p-2.5 text-slate-400 hover:bg-red-50 hover:text-red-600 sm:p-3"
             title={language === 'ku' ? 'Derkeve' : 'تسجيل الخروج'}
             aria-label={language === 'ku' ? 'Derkeve' : 'تسجيل الخروج'}
           >
@@ -321,12 +321,12 @@ export default function AppLayout() {
           </button>
         </aside>
 
-        <div className="app-shell-page mr-20 min-h-screen" dir="rtl">
+        <div className="app-shell-page min-h-screen pb-24 md:mr-20 md:pb-0" dir="rtl">
           <Outlet key={language} />
         </div>
         <KurmanjiUiTranslator enabled={language === 'ku'} />
         {!online && (
-          <div className="fixed bottom-4 left-4 z-[80] flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-medium text-white shadow-lg">
+          <div className="fixed bottom-24 left-4 z-[80] flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-medium text-white shadow-lg md:bottom-4">
             <WifiOff size={15} />
             <span>
               {language === 'ku' ? 'Bê înternet' : 'دون اتصال'}
