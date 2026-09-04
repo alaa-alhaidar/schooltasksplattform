@@ -1,6 +1,15 @@
 import { useEffect } from 'react';
 
 const translations: Record<string, string> = {
+  'إدارة المدرسة': 'Rêveberiya dibistanê', 'لوحة المهام والإشعارات': 'Panela peywir û agahdariyan',
+  'تحديد الجدول الأسبوعي': 'Bernameya heftane saz bike', 'إضافة مهمة': 'Peywirek lê zêde bike',
+  'إضافة إشعار': 'Agahdariyek lê zêde bike', 'إضافة إشعار جديد': 'Agahdariyeke nû lê zêde bike',
+  'المهام': 'Peywir', 'الاختبارات': 'Îmtîhan', 'كل الصفوف': 'Hemû pol', 'كل الشعب': 'Hemû şax',
+  'النوع': 'Cure', 'الصف': 'Pol', 'الشعبة': 'Şax', 'صالح حتى': 'Heya vê demê derbasdar e',
+  'رابط خارجي': 'Girêdana derveyî', 'ورقة عمل أو صورة': 'Pelê karê an wêne',
+  'PDF، JPG، PNG أو WebP · الحد الأقصى 10 MB': 'PDF, JPG, PNG an WebP · herî zêde 10 MB',
+  'النشاط': 'Çalakî', 'السنة': 'Sal', 'الشهر': 'Meh', 'الأسبوع': 'Hefte', 'أحدث المهام': 'Peywirên herî nû',
+  'التسليم:': 'Teslîmkirin:', 'المعلم:': 'Mamoste:', 'تسجيل الدخول': 'Têketin',
   'الخطة الأسبوعية': 'Plana heftane', 'الجدول الدراسي': 'Bernameya dersan', 'الإشعارات': 'Agahdarî',
   'إشعارات مهمة': 'Agahdariyên girîng', 'المهام حسب أيام الأسبوع': 'Peywir li gor rojên hefteyê',
   'لا توجد مهام': 'Peywir tune', 'مهام أخرى': 'Peywirên din', 'عرض التفاصيل': 'Hûrguliyan bibîne',
@@ -28,11 +37,17 @@ function translateText(value: string) {
   const trimmed = value.trim();
   let translated = translations[trimmed];
   if (!translated) translated = trimmed
+    .replace(/^المهام \((\d+)\)$/, 'Peywir ($1)')
+    .replace(/^الاختبارات \((\d+)\)$/, 'Îmtîhan ($1)')
     .replace(/^الأسبوع (\d+)$/, 'Hefta $1')
     .replace(/^الصف (.+)$/, 'Pol $1')
     .replace(/^الشعبة (.+)$/, 'Şax $1')
     .replace(/^مسجل باسم (.+)$/, 'Bi navê $1 têketî ye')
-    .replace(/^(\d+) (حصة|حصص)$/, '$1 ders');
+    .replace(/^(\d+) (حصة|حصص)$/, '$1 ders')
+    .replace(/الصف/g, 'Pol')
+    .replace(/الشعبة/g, 'Şax')
+    .replace(/التسليم:/g, 'Teslîmkirin:')
+    .replace(/المعلم:/g, 'Mamoste:');
   if (!translated || translated === trimmed) return null;
   return value.replace(trimmed, translated);
 }
